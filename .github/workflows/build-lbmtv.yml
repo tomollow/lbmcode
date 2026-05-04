@@ -1,0 +1,26 @@
+name: build-lbmtv
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSVC developer command prompt
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Build lbmtv
+        shell: cmd
+        run: |
+          if not exist build mkdir build
+          cl /nologo /D_USE_MATH_DEFINES /Febuild\lbmtv.exe src\sec1\lbmtv.c /link /STACK:8388608
