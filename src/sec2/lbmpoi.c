@@ -32,7 +32,7 @@
 
 # define DIM 64
 
-int main(void)
+int main(int argc, char *argv[])
 {
   FILE   *fp;
   int    nx = 20, ny = 20, time = 0, loop1, loop2;
@@ -43,7 +43,9 @@ int main(void)
   char   a[DIM][DIM];
 
   // initial condition
-//tau = 3.00;
+  if(argc >= 2){
+    tau = atof(argv[1]);
+  }
   nu = (tau - 0.5)/3.0;
   h = (double)ny;
 
