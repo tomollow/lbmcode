@@ -42,13 +42,14 @@ int main(int argc, char *argv[])
   double gx = 0.00001, gy = 0.0, tmp, u2, h, nu, norm, tau = 0.56;
   char   a[DIM][DIM];
 
-  // initial condition
+  // tau はコマンドライン引数で上書きできるようにする。
   if(argc >= 2){
     tau = atof(argv[1]);
   }
   nu = (tau - 0.5)/3.0;
   h = (double)ny;
 
+  // 密度 1、速度 0 の静止場から計算を始める。
   for(i = 0; i <= nx; i++){ for(j = 0; j <= ny; j++){
     u[i][j] = 0.0; v[i][j] = 0.0; un[i][j] = 0.0; vn[i][j] = 0.0; rho[i][j] = 1.0;
   } }
@@ -76,15 +77,17 @@ int main(int argc, char *argv[])
     f[k][i][j] = f0[k][i][j];
   } } }
 
+  // 定常解に近づくまで、LBM を反復して速度場を更新する。
   for(loop1 = 0; loop1 < 500; loop1++){
   for(loop2 = 0; loop2 < 200; loop2++){
     time++;
 
+    // 収束判定のため、1 ステップ前の速度場を保存する。
     for(i = 0; i <= nx; i++){ for(j = 0; j <= ny; j++){
       un[i][j] = u[i][j]; vn[i][j] = v[i][j];
     } }
 
-  // collision
+    // BGK 衝突モデルで分布関数を平衡分布へ緩和させる。
     for(i = 0; i <= nx; i++){ for(j = 0; j <= ny; j++){
       u2 = u[i][j]*u[i][j] + v[i][j]*v[i][j];      
       f0[0][i][j] = rho[i][j]*(1.0 -3.0/2.0*u2)*4.0/9.0;
@@ -102,7 +105,7 @@ int main(int argc, char *argv[])
       f[k][i][j] = f[k][i][j] - (f[k][i][j] - f0[k][i][j])/tau;
     } } }
 
-    // force
+    // 一様体積力を x 方向流れの駆動項として加える。
     for(i = 0; i <= nx; i++){ for(j = 0; j <= ny; j++){
       for(k = 1; k <= 4; k++){
         f[k][i][j] = f[k][i][j] + rho[i][j]*(cx[k]*gx + cy[k]*gy)/3.0;
@@ -112,7 +115,7 @@ int main(int argc, char *argv[])
       }
     } }
 
-    // propagation 
+    // 衝突後の分布関数を離散速度方向へ streaming する。
     for(i = 0; i <= nx; i++){ for(j = 0; j <= ny; j++){ for(k = 0; k <= 8; k++){
       ftmp[k][i][j] = f[k][i][j];
     } } }
@@ -124,14 +127,14 @@ int main(int argc, char *argv[])
       f[k][in][jn] = ftmp[k][i][j];
     } } }
 
-    // bounce back condition
+    // 上下壁では bounce-back により no-slip 条件を近似する。
     for(i = 0; i <= nx; i++){
       f[2][i][0] = f[4][i][0]; f[4][i][ny] = f[2][i][ny];
       f[5][i][0] = f[7][i][0]; f[7][i][ny] = f[5][i][ny];
       f[6][i][0] = f[8][i][0]; f[8][i][ny] = f[6][i][ny];
     } 
 
-    // physics
+    // 分布関数から密度と速度を再構成する。
     for(i = 0; i <= nx; i++){ for(j = 0; j <= ny; j++){
       rho[i][j] = f[0][i][j]; u[i][j] = 0; v[i][j] = 0;
       for( k = 1; k <= 8; k++){
@@ -143,6 +146,7 @@ int main(int argc, char *argv[])
       v[i][j] = v[i][j]/rho[i][j];
     } }
 
+    // 前ステップとの差の最大値を、定常到達の指標として使う。
     norm = 0.0;
     for(i = 0; i <= nx; i++){ for(j = 0; j <= ny; j++){
       tmp = sqrt(pow(u[i][j]-un[i][j],2) + pow(v[i][j]-vn[i][j],2));
@@ -151,11 +155,13 @@ int main(int argc, char *argv[])
 
   } //loop2
 
+  // 収束の様子、最大流速、壁面 slip を標準出力へ表示する。
   printf("Time = %d, Norm = %15.8e\n", time, norm);
   printf("Umax = %8.6e(%6.4e)\n",u[nx/2][ny/2], gx/8.0/nu*ny*ny);
   printf("Slip = %8.6e(%6.4e)\n",u[nx/2][0]/(gx/8.0/nu*ny*ny),
                                  8.0*tau*(2.0*tau -1.0)/3.0/ny/ny); 
 
+  // 中心断面速度を簡易な横棒グラフとして文字出力する。
   for(i = 0; i <= nx; i++){ for(j = 0; j <= ny; j++){
     a[i][j]='0';
   } }
@@ -174,6 +180,7 @@ int main(int argc, char *argv[])
     printf("\n");
   }
 
+  // 十分収束したら、中心断面の無次元速度分布を data に保存して終了する。
   if(norm < 0.0000000001 && time > 10000){
     fp = fopen("data","w");
 
