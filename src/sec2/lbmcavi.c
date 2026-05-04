@@ -276,7 +276,7 @@ int main(void)
 
   fp = fopen("datau","w");
     for(j = 1; j <= ny-1; j++){ for(i = 1; i <= nx-1; i++){
-      fprintf(fp," %10.8e", u[i][j])/ut;
+      fprintf(fp," %10.8e", u[i][j]/ut);
     }
   fprintf(fp,"\n");
   } 

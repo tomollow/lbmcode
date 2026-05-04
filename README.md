@@ -87,6 +87,52 @@ scripts\clean.cmd
 
 これらの生成物は Git の追跡対象から除外しています。
 
+## 実行例
+
+各 sec の代表例を試す最短コマンドです。
+
+### sec1
+
+```cmd
+scripts\run_one.cmd src\sec1\lbmtv.c
+```
+
+### sec2
+
+```cmd
+scripts\run_one.cmd src\sec2\fdlbm.c
+```
+
+対話入力が必要な `fdmadv.c` は、たとえば Upwind scheme なら次のように実行できます。
+
+```cmd
+echo 1 | build\bin\fdmadv.exe
+```
+
+### sec3
+
+```cmd
+scripts\run_one.cmd src\sec3\lbmtherm.c
+```
+
+### sec4
+
+```cmd
+scripts\run_one.cmd src\sec4\lbmblock.c
+```
+
+### sec5
+
+```cmd
+scripts\run_one.cmd src\sec5\lbmlap.c
+```
+
+### sec6
+
+```cmd
+scripts\run_one.cmd src\sec6\iblbm2cdfSRT.c
+```
+
 ## 継続的インテグレーション
 
 GitHub Actions では、`main` への push と pull request を契機に次を実行します。
