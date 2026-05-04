@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
   double u0 = 0.01, tmp, u2, nu, erru, errv, errp, tau;
   const char *output_dir = ".";
 
-  // initial condition
+  // tau、出力先、格子点数をコマンドライン引数で上書きできるようにする。
   tau = 0.8;
   nx = 5;
   if(argc >= 2){
@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
 //  nx = 10; ny = nx;
   ny = nx;
 
+  // Taylor vortex の初期条件を数値解側の場として与える。
   for(i = 0; i < nx; i++){ for(j = 0; j < ny; j++){
     u[i][j] = -u0*cos(2.0*M_PI*(double)i/(double)nx)*sin(2.0*M_PI*(double)j/(double)ny);
     v[i][j] =  u0*sin(2.0*M_PI*(double)i/(double)nx)*cos(2.0*M_PI*(double)j/(double)ny);
@@ -99,11 +100,12 @@ int main(int argc, char *argv[])
     f[k][i][j] = f0[k][i][j];
   } } }
 
-// calculation start
+  // 解析解を更新しながら、LBM を合計 nx^2 ステップ進める。
   for(loop1 = 0; loop1 < nx; loop1++){
   for(loop2 = 0; loop2 < nx; loop2++){
     time++;
 
+    // 現在時刻に対応する減衰 Taylor vortex の解析解を計算する。
     for(i = 0; i < nx; i++){ for(j = 0; j < ny; j++){
       ue[i][j] = -u0*cos(2.0*M_PI*(double)i/(double)nx)*sin(2.0*M_PI*(double)j/(double)ny)
                * exp(-nu*time*(pow(2.0*M_PI/(double)nx,2)+pow(2.0*M_PI/(double)nx,2)));
@@ -114,7 +116,7 @@ int main(int argc, char *argv[])
                * exp(-2.0*nu*time*(pow(2.0*M_PI/(double)nx,2)+pow(2.0*M_PI/(double)nx,2)));
     } }
 
-    // collision
+    // BGK 衝突モデルで分布関数を平衡分布へ緩和させる。
     for(i = 0; i < nx; i++){ for(j = 0; j < ny; j++){
       u2 = u[i][j]*u[i][j] + v[i][j]*v[i][j];      
       f0[0][i][j] = rho[i][j]*(1.0 -3.0/2.0*u2)*4.0/9.0;
@@ -132,7 +134,7 @@ int main(int argc, char *argv[])
       f[k][i][j] = f[k][i][j] - (f[k][i][j] - f0[k][i][j])/tau;
     } } }
 
-    // propagation 
+    // 衝突後の分布関数を隣接格子へ streaming する。
     for(i = 0; i < nx; i++){ for(j = 0; j < ny; j++){ for(k = 0; k <= 8; k++){
       ftmp[k][i][j] = f[k][i][j];
     } } }
@@ -146,7 +148,7 @@ int main(int argc, char *argv[])
       f[k][in][jn] = ftmp[k][i][j];
     } } }
 
-    // physics
+    // streaming 後の分布関数から密度と速度を再構成する。
     for(i = 0; i < nx; i++){ for(j = 0; j < ny; j++){
       rho[i][j] = f[0][i][j]; u[i][j] = 0; v[i][j] = 0;
       for( k = 1; k <= 8; k++){
@@ -161,6 +163,7 @@ int main(int argc, char *argv[])
   } //loop2
   } //loop1
 
+  // Taylor vortex の解析解に対する相対 L2 誤差を評価する。
   erru = 0.0; tmp = 0.0;
   for(i = 0; i < nx; i++){ for(j = 0; j < ny; j++){
    erru = erru + pow((ue[i][j] - u[i][j]),2); tmp = tmp + pow(ue[i][j],2);
@@ -182,6 +185,7 @@ int main(int argc, char *argv[])
   printf("Time = %f, nx = %d, tau= %f\n",time*u0/(double)nx, nx, tau);
   printf("Erru = %10.8e, Errv = %10.8e, Errp = %10.8e\n",erru, errv, errp);
 
+  // 誤差と場のデータを後処理用ファイルとして保存する。
   snprintf(path, sizeof(path), "%s/error", output_dir);
   fp = fopen(path,"w");
     fprintf(fp,"u %15.8e\n", erru);
