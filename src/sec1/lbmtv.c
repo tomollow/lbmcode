@@ -34,24 +34,40 @@
 
 # define DIM 80
 
-int main(void)
+int main(int argc, char *argv[])
 {
   FILE   *fp;
   int    nx, ny, time = 0, loop1, loop2;
   int    i, j, k, in, jn;
+  char   path[256];
   double  rho[DIM][DIM],  u[DIM][DIM],  v[DIM][DIM];
   double rhoe[DIM][DIM], ue[DIM][DIM], ve[DIM][DIM];
   double f[9][DIM][DIM], f0[9][DIM][DIM], ftmp[9][DIM][DIM], cx[9], cy[9];
   double u0 = 0.01, tmp, u2, nu, erru, errv, errp, tau;
+  const char *output_dir = ".";
 
   // initial condition
   tau = 0.8;
+  nx = 5;
+  if(argc >= 2){
+    tau = atof(argv[1]);
+  }
+  if(argc >= 3){
+    output_dir = argv[2];
+  }
+  if(argc >= 4){
+    nx = atoi(argv[3]);
+  }
+  if(nx < 1 || nx > DIM){
+    fprintf(stderr, "nx must satisfy 1 <= nx <= %d\n", DIM);
+    return 1;
+  }
   nu = (tau - 0.5)/3.0;
 //  nx = 80; ny = nx;
 //  nx = 40; ny = nx;
 //  nx = 20; ny = nx;
 //  nx = 10; ny = nx;
-  nx = 5; ny = nx;
+  ny = nx;
 
   for(i = 0; i < nx; i++){ for(j = 0; j < ny; j++){
     u[i][j] = -u0*cos(2.0*M_PI*(double)i/(double)nx)*sin(2.0*M_PI*(double)j/(double)ny);
@@ -166,13 +182,15 @@ int main(void)
   printf("Time = %f, nx = %d, tau= %f\n",time*u0/(double)nx, nx, tau);
   printf("Erru = %10.8e, Errv = %10.8e, Errp = %10.8e\n",erru, errv, errp);
 
-  fp = fopen("error","w");
+  snprintf(path, sizeof(path), "%s/error", output_dir);
+  fp = fopen(path,"w");
     fprintf(fp,"u %15.8e\n", erru);
     fprintf(fp,"v %15.8e\n", errv);
     fprintf(fp,"p %15.8e\n", errp);
   fclose(fp);
 
-  fp = fopen("datautv","w");
+  snprintf(path, sizeof(path), "%s/datautv", output_dir);
+  fp = fopen(path,"w");
     for(i = 0; i < nx; i++){ for(j = 0; j < ny; j++){
       fprintf(fp," %10.8e", u[i][j]);
     }
@@ -180,7 +198,8 @@ int main(void)
   } 
   fclose(fp);
 
-  fp = fopen("datavtv","w");
+  snprintf(path, sizeof(path), "%s/datavtv", output_dir);
+  fp = fopen(path,"w");
     for(i = 0; i < nx; i++){ for(j = 0; j < ny; j++){
       fprintf(fp," %10.8e", v[i][j]);
     }
@@ -188,7 +207,8 @@ int main(void)
   } 
   fclose(fp);
 
-  fp = fopen("datartv","w");
+  snprintf(path, sizeof(path), "%s/datartv", output_dir);
+  fp = fopen(path,"w");
     for(i = 0; i < nx; i++){ for(j = 0; j < ny; j++){
       fprintf(fp," %e", rho[i][j]/3.0);
     }
@@ -196,7 +216,8 @@ int main(void)
   } 
   fclose(fp);
 
-  fp = fopen("datautve","w");
+  snprintf(path, sizeof(path), "%s/datautve", output_dir);
+  fp = fopen(path,"w");
     for(i = 0; i < nx; i++){ for(j = 0; j < ny; j++){
       fprintf(fp," %10.8e", ue[i][j]);
     }
@@ -204,7 +225,8 @@ int main(void)
   } 
   fclose(fp);
 
-  fp = fopen("datavtve","w");
+  snprintf(path, sizeof(path), "%s/datavtve", output_dir);
+  fp = fopen(path,"w");
     for(i = 0; i < nx; i++){ for(j = 0; j < ny; j++){
       fprintf(fp," %10.8e", ve[i][j]);
     }
@@ -212,7 +234,8 @@ int main(void)
   } 
   fclose(fp);
 
-  fp = fopen("datartve","w");
+  snprintf(path, sizeof(path), "%s/datartve", output_dir);
+  fp = fopen(path,"w");
     for(i = 0; i < nx; i++){ for(j = 0; j < ny; j++){
       fprintf(fp," %e", rhoe[i][j]/3.0);
     }

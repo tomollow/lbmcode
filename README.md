@@ -14,6 +14,7 @@
 ### ファイル一覧
 
 - `src/sec1/lbmtv.c`: Taylor vortex flow
+- `docs/sec1/lbmtv.md`: `lbmtv.c` の説明と数式
 - `src/sec2/fdlbm.c`: 有限差分格子ボルツマン法による Poiseuille flow
 - `src/sec2/fdmadv.c`: 1 次元移流方程式の有限差分法
 - `src/sec2/lbmbound.c`: 境界条件スキームを比較する Poiseuille flow
@@ -58,6 +59,7 @@ scripts\run_one.cmd src\sec2\fdmadv.c
 ```
 
 この場合、実行ファイルは `build\bin` に、実行時に生成されるファイルは `outputs\fdmadv` に出力されます。
+この場合、実行ファイルは `build\bin` に、実行時に生成されるファイルは `outputs\sec2\fdmadv` のように sec ごとのフォルダに出力されます。
 
 すべての C ファイルをまとめてビルドする場合は次を実行します。
 
@@ -75,7 +77,7 @@ scripts\clean.cmd
 
 ### 出力ファイル
 
-`scripts\run_one.cmd src\sec1\lbmtv.c` を実行すると、`outputs\lbmtv` に次の結果ファイルを生成します。
+`scripts\run_one.cmd src\sec1\lbmtv.c` を実行すると、`outputs\sec1\lbmtv` に次の結果ファイルを生成します。
 
 - `error`
 - `datautv`
