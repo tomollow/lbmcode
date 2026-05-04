@@ -5,15 +5,35 @@
 ## 構成
 
 - `src/sec1`: Taylor vortex の基本例
-- `src/sec2`: FDM と LBM の追加例
-- `src/sec3`: 自然対流と熱流動の例
-- `src/sec4`: block と Cahn-Hilliard 関連の例
-- `src/sec5`: Laplace と Zalesak の例
-- `src/sec6`: immersed boundary method 関連の例
+- `src/sec2`: Poiseuille flow、cavity flow、移流方程式などの基本例
+- `src/sec3`: 熱 LBM と自然対流の例
+- `src/sec4`: multi-block と cavity flow の例
+- `src/sec5`: 二相流に関する Laplace 則と Zalesak disk の例
+- `src/sec6`: immersed boundary method を使った円筒 Couette flow などの例
+
+### ファイル一覧
+
+- `src/sec1/lbmtv.c`: Taylor vortex flow
+- `src/sec2/fdlbm.c`: 有限差分格子ボルツマン法による Poiseuille flow
+- `src/sec2/fdmadv.c`: 1 次元移流方程式の有限差分法
+- `src/sec2/lbmbound.c`: 境界条件スキームを比較する Poiseuille flow
+- `src/sec2/lbmcavi.c`: compressibility error を含む cavity flow
+- `src/sec2/lbmpoi.c`: 格子ボルツマン法による Poiseuille flow
+- `src/sec3/lbmnc.c`: double-population thermal LBM による自然対流
+- `src/sec3/lbmtherm.c`: Thermal LBM の基本例
+- `src/sec4/lbmblock.c`: multi-block LBM による Couette flow
+- `src/sec4/lbmcm.c`: cavity flow の例
+- `src/sec5/lbmlap.c`: Laplace's law の検証
+- `src/sec5/lbmzalesak.c`: Zalesak's disk の移流
+- `src/sec6/iblbm2cdfSRT.c`: direct forcing 法による円筒 Couette flow
+- `src/sec6/iblbm2cicMRT.c`: implicit correction 法と MRT による円筒 Couette flow
+- `src/sec6/iblbm2cicTRT.c`: implicit correction 法と TRT による円筒 Couette flow
+- `src/sec6/iblbmdkt.c`: immersed boundary-lattice Boltzmann method の例
+- `src/sec6/iblbmsingle.c`: immersed boundary-lattice Boltzmann method の単体例
 
 ## ビルドと実行
 
-現時点では、`lbmtv.c` 用のビルドスクリプトを同梱しています。
+Visual Studio の C/C++ ツールチェーンを使う前提で、単体ビルドと一括ビルドのスクリプトを同梱しています。
 
 ### Visual Studio を使う場合
 
@@ -24,7 +44,20 @@ scripts\build_lbmtv.cmd
 build\lbmtv.exe
 ```
 
-このスクリプトは `vcvars64.bat` 経由で `cl.exe` を呼び出します。`lbmtv.c` ではスタック上に大きな配列を確保しているため、リンク時にスタックサイズも拡張しています。
+任意の 1 ファイルだけビルドする場合は次を使えます。
+
+```cmd
+scripts\build_one.cmd src\sec2\fdmadv.c
+build\fdmadv.exe
+```
+
+すべての C ファイルをまとめてビルドする場合は次を実行します。
+
+```cmd
+scripts\build_all.cmd
+```
+
+これらのスクリプトは必要に応じて `vcvars64.bat` を呼び出し、`cl.exe` を使ってビルドします。いくつかのコードはスタック上に大きな配列を確保しているため、リンク時にスタックサイズも拡張しています。
 
 ### 出力ファイル
 
@@ -42,4 +75,7 @@ build\lbmtv.exe
 
 ## 継続的インテグレーション
 
-GitHub Actions では、`main` への push と pull request を契機に `src/sec1/lbmtv.c` をビルドします。
+GitHub Actions では、`main` への push と pull request を契機に次を実行します。
+
+- すべての C ファイルのビルド
+- `lbmtv.exe` の smoke test 実行

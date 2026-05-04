@@ -1,4 +1,4 @@
-name: build-lbmtv
+name: build-and-test
 
 on:
   push:
@@ -19,8 +19,10 @@ jobs:
       - name: Setup MSVC developer command prompt
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Build lbmtv
+      - name: Build all examples
         shell: cmd
-        run: |
-          if not exist build mkdir build
-          cl /nologo /D_USE_MATH_DEFINES /Febuild\lbmtv.exe src\sec1\lbmtv.c /link /STACK:8388608
+        run: scripts\build_all.cmd
+
+      - name: Run smoke test
+        shell: cmd
+        run: scripts\smoke_test.cmd

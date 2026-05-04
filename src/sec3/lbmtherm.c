@@ -39,9 +39,78 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#include <complex.h>
 
 # define DIM 100
+
+typedef struct {
+  double real;
+  double imag;
+} complex_double;
+
+static complex_double make_complex(double real, double imag)
+{
+  complex_double value;
+
+  value.real = real;
+  value.imag = imag;
+
+  return value;
+}
+
+static complex_double complex_add(complex_double left, complex_double right)
+{
+  return make_complex(left.real + right.real, left.imag + right.imag);
+}
+
+static complex_double complex_sub(complex_double left, complex_double right)
+{
+  return make_complex(left.real - right.real, left.imag - right.imag);
+}
+
+static complex_double complex_mul(complex_double left, complex_double right)
+{
+  return make_complex(left.real*right.real - left.imag*right.imag,
+                      left.real*right.imag + left.imag*right.real);
+}
+
+static complex_double complex_scale(complex_double value, double scale)
+{
+  return make_complex(value.real*scale, value.imag*scale);
+}
+
+static complex_double complex_div(complex_double left, complex_double right)
+{
+  double denominator;
+
+  denominator = right.real*right.real + right.imag*right.imag;
+
+  return make_complex((left.real*right.real + left.imag*right.imag)/denominator,
+                      (left.imag*right.real - left.real*right.imag)/denominator);
+}
+
+static complex_double complex_exp(complex_double value)
+{
+  double scale;
+
+  scale = exp(value.real);
+  return make_complex(scale*cos(value.imag), scale*sin(value.imag));
+}
+
+static complex_double complex_sqrt_value(complex_double value)
+{
+  double magnitude;
+  double real_part;
+  double imag_part;
+
+  magnitude = sqrt(value.real*value.real + value.imag*value.imag);
+  real_part = sqrt((magnitude + value.real)/2.0);
+  imag_part = sqrt((magnitude - value.real)/2.0);
+  if(value.imag < 0.0){
+    imag_part = -imag_part;
+  }
+
+  return make_complex(real_part, imag_part);
+}
 
 int main(void)
 {
@@ -52,14 +121,14 @@ int main(void)
   double g[5][DIM][DIM], g0[5][DIM][DIM], gtmp[5][DIM][DIM], cx[5], cy[5];
   double h, tmp, norm, err, emax, emin, u0, chi, wav;
   double pe = 20.0, taug = 0.56, q = 0.7;
-  double _Complex beta, ec[DIM][DIM];
+  complex_double beta, ec[DIM][DIM];
   char   a[DIM][DIM], b[DIM][DIM];
 
   // initial condition
   wav = 2.*M_PI/(double)nx;
   chi = (taug - 0.5)/3.0;
   h = (double)(ny - 2) + 2.0*q; u0 = pe*chi/h;
-  beta = wav*csqrt(1.0 + I*u0/chi/wav);
+  beta = complex_scale(complex_sqrt_value(make_complex(1.0, u0/chi/wav)), wav);
 
   cx[0] = 0.0; cy[0] = 0.0;
   cx[1] = 1.0; cy[1] = 0.0;  cx[2] = 0.0; cy[2] = 1.0;
@@ -74,20 +143,41 @@ int main(void)
 
   if(flag == 1){
     for(i = 0; i <= nx; i++){ for(j = 0; j <= ny; j++){
-      ec[i][j] = cexp(I*wav*(double)i)/(cexp(beta*h) - cexp(-beta*h))
-               *( (1.0 - cexp(-beta*h))*cexp( beta*((double)j - 1.0 + q))
-                - (1.0 - cexp( beta*h))*cexp(-beta*((double)j - 1.0 + q)));
+      complex_double phase, beta_h, beta_y, numerator, denominator;
+
+      phase = complex_exp(make_complex(0.0, wav*(double)i));
+      beta_h = complex_scale(beta, h);
+      beta_y = complex_scale(beta, (double)j - 1.0 + q);
+      denominator = complex_sub(complex_exp(beta_h), complex_exp(complex_scale(beta_h, -1.0)));
+      numerator = complex_sub(
+        complex_mul(complex_sub(make_complex(1.0, 0.0), complex_exp(complex_scale(beta_h, -1.0))),
+                    complex_exp(beta_y)),
+        complex_mul(complex_sub(make_complex(1.0, 0.0), complex_exp(beta_h)),
+                    complex_exp(complex_scale(beta_y, -1.0)))
+      );
+      ec[i][j] = complex_mul(complex_div(phase, denominator), numerator);
     } }
   }else{
     for(i = 0; i <= nx; i++){ for(j = 0; j <= ny; j++){
-      ec[i][j] = cexp(I*wav*(double)i)/beta/h/(cexp(beta*h) - cexp(-beta*h))
-               *( (1.0 + cexp(-beta*h))*cexp( beta*((double)j - 1.0 + q))
-                + (1.0 + cexp( beta*h))*cexp(-beta*((double)j - 1.0 + q)));
+      complex_double phase, beta_h, beta_y, numerator, denominator;
+
+      phase = complex_exp(make_complex(0.0, wav*(double)i));
+      beta_h = complex_scale(beta, h);
+      beta_y = complex_scale(beta, (double)j - 1.0 + q);
+      denominator = complex_mul(beta, complex_scale(
+        complex_sub(complex_exp(beta_h), complex_exp(complex_scale(beta_h, -1.0))), h));
+      numerator = complex_add(
+        complex_mul(complex_add(make_complex(1.0, 0.0), complex_exp(complex_scale(beta_h, -1.0))),
+                    complex_exp(beta_y)),
+        complex_mul(complex_add(make_complex(1.0, 0.0), complex_exp(beta_h)),
+                    complex_exp(complex_scale(beta_y, -1.0)))
+      );
+      ec[i][j] = complex_mul(complex_div(phase, denominator), numerator);
     } }
   }
 
   for(i = 0; i <= nx; i++){ for(j = 0; j <= ny; j++){
-    ea[i][j] = creal(ec[i][j]);
+    ea[i][j] = ec[i][j].real;
      e[i][j] = ea[i][j];
   } }
 
