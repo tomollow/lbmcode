@@ -2,7 +2,7 @@
 
 ## 概要
 
-[src/sec2/lbmpoi.c](src/sec2/lbmpoi.c) は、2 次元チャネル内の Poiseuille flow を D2Q9 の単一緩和時間格子ボルツマン法で計算するサンプルです。圧力差の代わりに x 方向の一様体積力を与え、上下壁では bounce-back による no-slip 条件を課しています。
+[src/sec2/lbmpoi.c](../../src/sec2/lbmpoi.c) は、2 次元チャネル内の Poiseuille flow を D2Q9 の単一緩和時間格子ボルツマン法で計算するサンプルです。圧力差の代わりに x 方向の一様体積力を与え、上下壁では bounce-back による no-slip 条件を課しています。
 
 このコードでは、次の 4 つを 1 本のプログラムで行っています。
 
@@ -54,7 +54,7 @@ w_{1\sim4}=\frac{1}{9},\quad
 w_{5\sim8}=\frac{1}{36}
 $$
 
-で、これは [src/sec2/lbmpoi.c](src/sec2/lbmpoi.c) の `cx`, `cy`, `f0` の初期化にそのまま対応しています。
+で、これは [src/sec2/lbmpoi.c](../../src/sec2/lbmpoi.c) の `cx`, `cy`, `f0` の初期化にそのまま対応しています。
 
 ## 物理設定
 
@@ -90,11 +90,7 @@ $$
 
 $$
 f_k^{\mathrm{eq}} = w_k \rho
-\left(
-1 + 3\,\mathbf{c}_k\cdot\mathbf{u}
-+ \frac{9}{2}(\mathbf{c}_k\cdot\mathbf{u})^2
-- \frac{3}{2}\lVert\mathbf{u}\rVert^2
-\right)
+\left( 1 + 3\,\mathbf{c}_k\cdot\mathbf{u} + \frac{9}{2}(\mathbf{c}_k\cdot\mathbf{u})^2 - \frac{3}{2}\lVert\mathbf{u}\rVert^2 \right)
 $$
 
 ここで
@@ -245,7 +241,7 @@ $$
 
 ## 標準設定での実行結果
 
-[src/sec2/lbmpoi.c](src/sec2/lbmpoi.c) を既定値で実行すると、収束直前に次のような結果が得られます。
+[src/sec2/lbmpoi.c](../../src/sec2/lbmpoi.c) を既定値で実行すると、収束直前に次のような結果が得られます。
 
 $$
 \mathrm{Time} = 23800,\quad \mathrm{Norm} = 9.88728162 \times 10^{-11}
@@ -263,11 +259,11 @@ $$
 
 数値最大速度と解析解の最大速度はよく一致しており、壁面 slip もコード内の理論式と一致しています。
 
-また、出力ファイル [outputs/sec2/lbmpoi/data](outputs/sec2/lbmpoi/data) には、中心断面 $x=n_x/2$ の無次元速度分布が 21 点分保存されます。先頭と末尾の値が約 $4.48\times 10^{-4}$、中央が約 $1.00044$ であり、放物線分布に小さな slip が乗った形になっています。
+また、出力ファイル [outputs/sec2/lbmpoi/data](../../outputs/sec2/lbmpoi/data) には、中心断面 $x=n_x/2$ の無次元速度分布が 21 点分保存されます。先頭と末尾の値が約 $4.48\times 10^{-4}$、中央が約 $1.00044$ であり、放物線分布に小さな slip が乗った形になっています。
 
 ## tau による定常速度分布比較
 
-`tau = 0.56` と `tau = 3.0` の 2 条件で [src/sec2/lbmpoi.c](src/sec2/lbmpoi.c) を実行し、定常速度分布を解析解と比較した図を [docs/assets/sec2/lbmpoi_tau_compare.png](docs/assets/sec2/lbmpoi_tau_compare.png) に保存しています。図は左に模式図、右に計算結果を配置しており、模式図は教科書の図 2.7 に合わせて、上下壁、左右の周期的境界、体積力 $G_x$、放物線状の流速分布を示す形にしています。
+`tau = 0.56` と `tau = 3.0` の 2 条件で [src/sec2/lbmpoi.c](../../src/sec2/lbmpoi.c) を実行し、定常速度分布を解析解と比較した図を [docs/assets/sec2/lbmpoi_tau_compare.png](../assets/sec2/lbmpoi_tau_compare.png) に保存しています。図は左に模式図、右に計算結果を配置しており、模式図は教科書の図 2.7 に合わせて、上下壁、左右の周期的境界、体積力 $G_x$、放物線状の流速分布を示す形にしています。
 
 - `tau = 0.56`: ○
 - `tau = 3.0`: ×
@@ -289,7 +285,7 @@ $$
 
 <img src="../assets/sec2/lbmpoi_tau_compare.png" alt="lbmpoi tau comparison" width="50%">
 
-この比較に用いた生の実行結果は [outputs/sec2/lbmpoi_tau_0_56/data](outputs/sec2/lbmpoi_tau_0_56/data) と [outputs/sec2/lbmpoi_tau_3_0/data](outputs/sec2/lbmpoi_tau_3_0/data) に保存されます。`tau = 3.0` の結果が解析解よりやや右側に出ているのは、緩和時間が大きい条件では壁面 slip の影響が強く、無次元化後も中心付近の速度が解析解より大きめに残るためです。追跡対象の図だけを `docs/assets/sec2` に置き、再生成可能な実行結果は `outputs/sec2` に分離しています。
+この比較に用いた生の実行結果は [outputs/sec2/lbmpoi_tau_0_56/data](../../outputs/sec2/lbmpoi_tau_0_56/data) と [outputs/sec2/lbmpoi_tau_3_0/data](../../outputs/sec2/lbmpoi_tau_3_0/data) に保存されます。`tau = 3.0` の結果が解析解よりやや右側に出ているのは、緩和時間が大きい条件では壁面 slip の影響が強く、無次元化後も中心付近の速度が解析解より大きめに残るためです。追跡対象の図だけを `docs/assets/sec2` に置き、再生成可能な実行結果は `outputs/sec2` に分離しています。
 
 ## 標準出力の見方
 
@@ -307,11 +303,11 @@ $$
 
 - `data`: 中心断面の無次元速度分布
 
-[scripts/run_one.cmd](scripts/run_one.cmd) で実行した場合、このファイルは [outputs/sec2/lbmpoi/data](outputs/sec2/lbmpoi/data) に保存されます。
+[scripts/run_one.cmd](../../scripts/run_one.cmd) で実行した場合、このファイルは [outputs/sec2/lbmpoi/data](../../outputs/sec2/lbmpoi/data) に保存されます。
 
 ## コードの読み方
 
-[src/sec2/lbmpoi.c](src/sec2/lbmpoi.c) は大きく次の順に読むと把握しやすいです。
+[src/sec2/lbmpoi.c](../../src/sec2/lbmpoi.c) は大きく次の順に読むと把握しやすいです。
 
 - 格子点数、体積力、緩和時間などの設定
 - D2Q9 の離散速度と平衡分布の初期化

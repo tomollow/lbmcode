@@ -2,7 +2,7 @@
 
 ## 概要
 
-[src/sec1/lbmtv.c](src/sec1/lbmtv.c) は、2 次元 Taylor vortex flow を D2Q9 の単一緩和時間格子ボルツマン法で計算し、解析解との誤差を評価するサンプルです。周期境界条件のもとで渦が粘性により減衰していく問題を扱っています。
+[src/sec1/lbmtv.c](../../src/sec1/lbmtv.c) は、2 次元 Taylor vortex flow を D2Q9 の単一緩和時間格子ボルツマン法で計算し、解析解との誤差を評価するサンプルです。周期境界条件のもとで渦が粘性により減衰していく問題を扱っています。
 
 このコードでは、次の 3 つを 1 本のプログラムで行っています。
 
@@ -51,7 +51,7 @@ w_{1\sim4}=\frac{1}{9},\quad
 w_{5\sim8}=\frac{1}{36}
 $$
 
-これは [src/sec1/lbmtv.c](src/sec1/lbmtv.c) の `cx`, `cy` と `f0` の計算にそのまま現れています。
+これは [src/sec1/lbmtv.c](../../src/sec1/lbmtv.c) の `cx`, `cy` と `f0` の計算にそのまま現れています。
 
 ## 初期条件
 
@@ -76,7 +76,7 @@ $$
 \right]
 $$
 
-この部分は [src/sec1/lbmtv.c](src/sec1/lbmtv.c) の初期条件ループに対応します。
+この部分は [src/sec1/lbmtv.c](../../src/sec1/lbmtv.c) の初期条件ループに対応します。
 
 ## 粘性係数
 
@@ -100,11 +100,7 @@ $$
 
 $$
 f_k^{\mathrm{eq}} = w_k \rho
-\left(
-1 + 3\,\mathbf{c}_k\cdot\mathbf{u}
-+ \frac{9}{2}(\mathbf{c}_k\cdot\mathbf{u})^2
-- \frac{3}{2}\lVert\mathbf{u}\rVert^2
-\right)
+\left( 1 + 3\,\mathbf{c}_k\cdot\mathbf{u} + \frac{9}{2}(\mathbf{c}_k\cdot\mathbf{u})^2 - \frac{3}{2}\lVert\mathbf{u}\rVert^2 \right)
 $$
 
 で与えています。ここで
@@ -231,7 +227,7 @@ $$
 
 ## 解析結果と評価結果
 
-現状の標準設定では、[src/sec1/lbmtv.c](src/sec1/lbmtv.c) は
+現状の標準設定では、[src/sec1/lbmtv.c](../../src/sec1/lbmtv.c) は
 
 $$
 τ = 0.8, n_x = n_y = 5, u_0 = 0.01
@@ -275,7 +271,7 @@ $$
 
 ## 格子点数と誤差の関係
 
-`tau = 0.8` を固定し、`n_x = n_y = 80, 40, 20, 10, 5` の 5 条件で [src/sec1/lbmtv.c](src/sec1/lbmtv.c) を実行すると、誤差は次のようになります。
+`tau = 0.8` を固定し、`n_x = n_y = 80, 40, 20, 10, 5` の 5 条件で [src/sec1/lbmtv.c](../../src/sec1/lbmtv.c) を実行すると、誤差は次のようになります。
 
 | error | nx=5 | nx=10 | nx=20 | nx=40 | nx=80 |
 |---|---:|---:|---:|---:|---:|
@@ -283,9 +279,9 @@ $$
 | Errv | 4.39273007e-01 | 1.28897127e-01 | 3.34553577e-02 | 8.46312055e-03 | 2.10621603e-03 |
 | Errp | 4.17111026e-08 | 9.75951539e-11 | 1.82823042e-10 | 1.10123955e-10 | 2.36243197e-10 |
 
-この結果の追跡用要約は [docs/sec1/generated/lbmtv_nx_errors.md](docs/sec1/generated/lbmtv_nx_errors.md) と [docs/sec1/generated/lbmtv_nx_errors.csv](docs/sec1/generated/lbmtv_nx_errors.csv) に保存しています。生の実行出力は従来どおり `outputs/sec1/lbmtv_nx_study` に残ります。
+この結果の追跡用要約は [docs/sec1/generated/lbmtv_nx_errors.md](generated/lbmtv_nx_errors.md) と [docs/sec1/generated/lbmtv_nx_errors.csv](generated/lbmtv_nx_errors.csv) に保存しています。生の実行出力は従来どおり `outputs/sec1/lbmtv_nx_study` に残ります。
 
-また、格子点数と誤差の関係を示す追跡用グラフは [docs/assets/sec1/lbmtv_nx_errors.png](docs/assets/sec1/lbmtv_nx_errors.png) に保存しています。
+また、格子点数と誤差の関係を示す追跡用グラフは [docs/assets/sec1/lbmtv_nx_errors.png](../assets/sec1/lbmtv_nx_errors.png) に保存しています。
 
 <img src="../assets/sec1/lbmtv_nx_errors.png" alt="lbmtv nx-error plot" width="50%">
 
@@ -329,7 +325,7 @@ $$
 
 ## コードの読み方
 
-[src/sec1/lbmtv.c](src/sec1/lbmtv.c) は大きく次の順に読めます。
+[src/sec1/lbmtv.c](../../src/sec1/lbmtv.c) は大きく次の順に読めます。
 
 - 初期条件の設定
 - 離散速度 `cx`, `cy` の設定
