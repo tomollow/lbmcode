@@ -16,10 +16,9 @@ call "%~dp0build_one.cmd" "%SOURCE%"
 if errorlevel 1 exit /b %errorlevel%
 
 if "%~2"=="" (
-  for %%I in ("%SOURCE%") do set "SECTION=%%~pI"
-  set "SECTION=%SECTION:~1,-1%"
-  set "SECTION=%SECTION:src\=%"
-  set "RUN_DIR=outputs\%SECTION%\%~n1"
+  for %%I in ("%SOURCE%") do (
+    for %%J in ("%%~dpI.") do set "RUN_DIR=outputs\%%~nJ\%%~nI"
+  )
 ) else (
   set "RUN_DIR=%~2"
 )

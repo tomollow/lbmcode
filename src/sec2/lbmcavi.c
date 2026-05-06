@@ -31,21 +31,37 @@
 #include <math.h>
 #include <stdlib.h>
 
-# define DIM 52 
+# define DIM 258 
 
-int main(void)
+static double rho[DIM][DIM], u[DIM][DIM], v[DIM][DIM], un[DIM][DIM], vn[DIM][DIM], sf[DIM][DIM];
+static double f[9][DIM][DIM], f0[9][DIM][DIM], ftmp[9][DIM][DIM];
+static char a[DIM][DIM];
+
+int main(int argc, char *argv[])
 {
   FILE   *fp;
   int    nx = 51, ny = 51, time = 0, loop1, loop2;
   int    i, j, k, in, jn, ip, im, jp, jm;
-  double rho[DIM][DIM], u[DIM][DIM], v[DIM][DIM], un[DIM][DIM], vn[DIM][DIM], sf[DIM][DIM];
-  double f[9][DIM][DIM], f0[9][DIM][DIM], ftmp[9][DIM][DIM], cx[9], cy[9];
+  int    converged = 0;
+  double cx[9], cy[9];
   double ut = 0.100;
 //  double ut = 0.075;
 //  double ut = 0.050;
 //  double ut = 0.025;
   double vt = 0.0, umax, umin, tmp, u2, nu, norm, err, tau, re = 100;
-  char   a[DIM][DIM];
+  double rhoavg = 1.0, delta = 0.0, ninterior;
+
+  if(argc >= 2){
+    ut = atof(argv[1]);
+  }
+  if(argc >= 3){
+    nx = atoi(argv[2]);
+    ny = nx;
+  }
+  if(nx < 3 || nx > DIM - 2){
+    fprintf(stderr, "nx must satisfy 3 <= nx <= %d\n", DIM - 2);
+    return 1;
+  }
 
   // initial condition
   nu = ut*(double)(nx - 1)/re;
@@ -202,56 +218,26 @@ int main(void)
   for(i = 1; i <= nx - 1; i++){ for(j = 1; j <= ny - 1; j++){
     tmp = tmp + rho[i][j];
   } }
-  tmp = tmp/(nx - 1)/(ny - 1);
-
+  ninterior = (double)(nx - 1)*(double)(ny - 1);
+  tmp = tmp/ninterior;
+  rhoavg = tmp;
+ 
   err = 0.0;
   for(i = 1; i <= nx - 1; i++){ for(j = 1; j <= ny - 1; j++){
     err = err + pow((rho[i][j] - tmp),2);
   } }
-  err = sqrt(err)/(nx - 1)/(ny - 1);
+  err = sqrt(err/ninterior);
   err = err/tmp;
+  delta = err;
 
-  printf("Time = %d, Norm = %8.6e, Error = %8.6e\n", time, norm, err);
+  if(norm < 0.000000000001 && time > 10000){ converged = 1; break; }
 
-  for(i = 1; i <= nx - 1; i++){ for(j = 1; j <= ny - 1; j++){
-    a[i][j]='0';
-  } }
-
-  umax = -999.9; umin = 999.9;
-  for(i = 1; i <= nx - 1; i++){ for(j = 1; j <= ny - 1; j++){
-    tmp = sqrt(pow(u[i][j],2) + pow(v[i][j],2));
-    if(tmp >= umax){umax = tmp;}
-    if(tmp <= umin){umin = tmp;}
-  } }
-
-  for(i = 1; i <= nx - 1; i++){ for(j = 1; j <= ny - 1; j++){
-    tmp = sqrt(pow(u[i][j],2) + pow(v[i][j],2));
-    if(tmp <=  umax*1.0            ){a[i][j] = '9';}
-    if(tmp <= (umax*0.9 + umin*0.1)){a[i][j] = '8';}
-    if(tmp <= (umax*0.8 + umin*0.2)){a[i][j] = '7';}
-    if(tmp <= (umax*0.7 + umin*0.3)){a[i][j] = '6';}
-    if(tmp <= (umax*0.6 + umin*0.4)){a[i][j] = '5';}
-    if(tmp <= (umax*0.5 + umin*0.5)){a[i][j] = '4';}
-    if(tmp <= (umax*0.4 + umin*0.6)){a[i][j] = '3';}
-    if(tmp <= (umax*0.3 + umin*0.7)){a[i][j] = '2';}
-    if(tmp <= (umax*0.2 + umin*0.8)){a[i][j] = '1';}
-    if(tmp <= (umax*0.1 + umin*0.9)){a[i][j] = '0';}
-  } }
-
-  printf("Re = %4.2f, ut = %5.3f, tau = %5.3f\n", re, ut, tau);
-
-  for(j = ny - 1; j >= 1; j = j - 2){ for(i = 1; i <= nx - 1; i = i + 2){
-    printf("%c",a[i][j]);
-    }
-    printf("\n");
-  }
-
-  if(norm < 0.000000000001 && time > 10000){ exit(0); }
+  if(converged == 1){ break; }
 
   } //loop1
 
   fp = fopen("error","w");
-  fprintf(fp,"%15.8e, %15.8e\n", ut, err);
+  fprintf(fp,"%15.8e, %15.8e, %15.8e, %15.8e\n", ut, rhoavg, delta, err);
   fclose(fp);
 
 // stream function
