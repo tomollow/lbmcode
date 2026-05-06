@@ -170,6 +170,7 @@ def main() -> None:
     )
 
     profile_axis.set_xlim(0.0, 1.5)
+    profile_axis.set_xticks([0.0, 0.3, 0.6, 0.9, 1.2, 1.5])
     profile_axis.set_ylim(0.0, 1.0)
     profile_axis.set_xlabel(r"$u_x/u_c$")
     profile_axis.set_ylabel(r"$y/h$")
