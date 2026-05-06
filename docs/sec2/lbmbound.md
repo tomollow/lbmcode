@@ -626,6 +626,7 @@ d:/work/LBMcode/.venv/Scripts/python.exe scripts/plot_lbmbound_all_methods_tau_0
 
 <img src="../assets/sec2/lbmbound_all_methods_tau_056.png" alt="lbmbound all methods tau 0.56 comparison" width="80%">
 
+
 ## 格子収束
 
 `tau = 0.56` を固定し、`n_x = n_y = 80, 40, 20, 10, 5` の 5 条件で [src/sec2/lbmbound.c](../../src/sec2/lbmbound.c) を実行したときの相対誤差を比較できます。結果の表は [docs/sec2/generated/lbmbound_nx_errors.md](../sec2/generated/lbmbound_nx_errors.md) と [docs/sec2/generated/lbmbound_nx_errors.csv](../sec2/generated/lbmbound_nx_errors.csv) に保存し、図は [docs/assets/sec2/lbmbound_nx_errors.png](../assets/sec2/lbmbound_nx_errors.png) に保存しています。

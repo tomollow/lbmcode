@@ -10,6 +10,8 @@ from matplotlib.ticker import ScalarFormatter
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
+SCRIPT_PATH = Path(__file__).resolve()
+SOURCE_PATH = ROOT_DIR / "src" / "sec2" / "lbmbound.c"
 BUILD_EXE = ROOT_DIR / "build" / "bin" / "lbmbound.exe"
 OUTPUT_DIR = ROOT_DIR / "outputs" / "sec2" / "lbmbound_nx_study"
 DOCS_DATA_DIR = ROOT_DIR / "docs" / "sec2" / "generated"
@@ -57,13 +59,18 @@ def parse_summary(run_log_text: str, flag: int, nx: int) -> re.Match[str]:
     return summary_match
 
 
+def cache_is_current(log_path: Path) -> bool:
+    log_mtime = log_path.stat().st_mtime
+    return log_mtime >= SCRIPT_PATH.stat().st_mtime and log_mtime >= SOURCE_PATH.stat().st_mtime
+
+
 def run_case(flag: int, output_name: str, nx: int) -> dict[str, float | int | bool]:
     case_dir = OUTPUT_DIR / output_name / f"nx_{nx}"
     case_dir.mkdir(parents=True, exist_ok=True)
     log_path = case_dir / "run.log"
     error_path = case_dir / "error"
 
-    if log_path.exists() and error_path.exists():
+    if log_path.exists() and error_path.exists() and cache_is_current(log_path):
         existing_log = log_path.read_text(encoding="utf-8", errors="ignore")
         if "FINAL time=" in existing_log:
             summary_match = parse_summary(existing_log, flag, nx)
