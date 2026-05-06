@@ -20,6 +20,7 @@
 - `src/sec2/lbmbound.c`: 境界条件スキームを比較する Poiseuille flow
 - `docs/sec2/lbmbound.md`: `lbmbound.c` の説明と数式
 - `src/sec2/lbmcavi.c`: compressibility error を含む cavity flow
+- `docs/sec2/lbmcavi.md`: `lbmcavi.c` の説明と数式
 - `src/sec2/lbmpoi.c`: 格子ボルツマン法による Poiseuille flow
 - `src/sec3/lbmnc.c`: double-population thermal LBM による自然対流
 - `src/sec3/lbmtherm.c`: Thermal LBM の基本例

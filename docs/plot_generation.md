@@ -74,6 +74,28 @@ d:/work/LBMcode/.venv/Scripts/python.exe scripts/<script-name>.py
   - 用途: 非平衡分布関数 $f_5^{neq}$ の `tau` 比較図を作る
   - 主な出力: [docs/assets/sec2/lbmpoi_fneq5_tau_compare.png](assets/sec2/lbmpoi_fneq5_tau_compare.png)
 
+- [scripts/plot_lbmcavi_streamfunction.py](../scripts/plot_lbmcavi_streamfunction.py)
+  - 用途: `lbmcavi.c` の流れ関数等値線図と中心線速度プロファイルを作る
+  - 前提: [outputs/sec2/lbmcavi](../outputs/sec2/lbmcavi) に `datau`, `datav`, `datas` があること
+  - 主な出力: [docs/assets/sec2/lbmcavi_streamfunction.png](assets/sec2/lbmcavi_streamfunction.png)
+  - 補助出力: [docs/sec2/generated/lbmcavi_ghia_re100_comparison.csv](sec2/generated/lbmcavi_ghia_re100_comparison.csv)
+
+- [scripts/plot_lbmcavi_ghia_compare.py](../scripts/plot_lbmcavi_ghia_compare.py)
+  - 用途: `lbmcavi.c` の中心線速度を Ghia (1982) の Re = 100 ベンチマークと比較する
+  - 前提: [outputs/sec2/lbmcavi](../outputs/sec2/lbmcavi) に `datau`, `datav` があること
+  - 主な出力: [docs/assets/sec2/lbmcavi_ghia_compare.png](assets/sec2/lbmcavi_ghia_compare.png)
+
+- [scripts/plot_lbmcavi_ghia_error.py](../scripts/plot_lbmcavi_ghia_error.py)
+  - 用途: `lbmcavi.c` の Ghia 比較表から中心線速度の絶対誤差を可視化する
+  - 前提: [docs/sec2/generated/lbmcavi_ghia_re100_comparison.csv](sec2/generated/lbmcavi_ghia_re100_comparison.csv) があること
+  - 主な出力: [docs/assets/sec2/lbmcavi_ghia_error.png](assets/sec2/lbmcavi_ghia_error.png)
+
+- [scripts/plot_lbmcavi_density_change.py](../scripts/plot_lbmcavi_density_change.py)
+  - 用途: 上壁速度 `u_x^w` に対する平均密度変化 `Δ = (1/ρ̄)√((1/N)Σ(ρ-ρ̄)^2)` の関係を作図する
+  - 前提: `lbmcavi.c` が上壁速度をコマンドライン引数で受け取れること
+  - 主な出力: [docs/assets/sec2/lbmcavi_density_change_vs_uwx.png](assets/sec2/lbmcavi_density_change_vs_uwx.png)
+  - 補助出力: [docs/sec2/generated/lbmcavi_density_change_vs_uwx.csv](sec2/generated/lbmcavi_density_change_vs_uwx.csv)
+
 ## 補足
 
 - スクリプトによっては C 実行ファイルのビルドを先に行います。
