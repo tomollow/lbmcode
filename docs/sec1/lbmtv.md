@@ -225,15 +225,28 @@ $$
 
 プログラムの標準出力と `error` ファイルには、この 3 つの誤差が保存されます。
 
-## 解析結果と評価結果
+## コードの読み方
 
-現状の標準設定では、[src/sec1/lbmtv.c](../../src/sec1/lbmtv.c) は
+[src/sec1/lbmtv.c](../../src/sec1/lbmtv.c) は大きく次の順に読めます。
+
+- 初期条件の設定
+- 離散速度 `cx`, `cy` の設定
+- 平衡分布 `f0` の初期化
+- `collision -> streaming -> macro update` の反復
+- 解析解との誤差評価
+- 出力ファイルの保存
+
+LBM の最小構成を理解する教材として使いやすく、周期境界と解析解を持つため、実装確認にも向いています。
+
+## 標準設定での結果
+
+標準設定では、[src/sec1/lbmtv.c](../../src/sec1/lbmtv.c) は
 
 $$
 τ = 0.8, n_x = n_y = 5, u_0 = 0.01
 $$
 
-で実行されます。実行終了時に得られた評価結果は次の通りです。
+で実行されます。実行終了時の誤差は次の通りです。
 
 $$
 \mathrm{Err}_u = 4.43695468 \times 10^{-1}
@@ -247,7 +260,7 @@ $$
 \mathrm{Err}_\rho = 4.17111026 \times 10^{-8}
 $$
 
-また、標準出力には無次元化時間と計算条件が次のように表示されます。
+標準出力には、無次元化時間と計算条件が次のように表示されます。
 
 $$
 \mathrm{Time} = 0.05, \qquad n_x = 5, \qquad \tau = 0.8
@@ -269,9 +282,9 @@ $$
 
 特にこのコードには `nx = 80, 40, 20, 10, 5` の候補がコメントとして残っているため、格子数依存性を確認する教材として使いやすい構成です。
 
-## 格子点数と誤差の関係
+## 格子収束
 
-`tau = 0.8` を固定し、`n_x = n_y = 80, 40, 20, 10, 5` の 5 条件で [src/sec1/lbmtv.c](../../src/sec1/lbmtv.c) を実行すると、誤差は次のようになります。
+次に、`tau = 0.8` を固定し、`n_x = n_y = 80, 40, 20, 10, 5` の 5 条件で [src/sec1/lbmtv.c](../../src/sec1/lbmtv.c) を実行したときの誤差を示します。
 
 | error | nx=5 | nx=10 | nx=20 | nx=40 | nx=80 |
 |---|---:|---:|---:|---:|---:|
@@ -281,11 +294,9 @@ $$
 
 この結果の追跡用要約は [docs/sec1/generated/lbmtv_nx_errors.md](generated/lbmtv_nx_errors.md) と [docs/sec1/generated/lbmtv_nx_errors.csv](generated/lbmtv_nx_errors.csv) に保存しています。生の実行出力は従来どおり `outputs/sec1/lbmtv_nx_study` に残ります。
 
-また、格子点数と誤差の関係を示す追跡用グラフは [docs/assets/sec1/lbmtv_nx_errors.png](../assets/sec1/lbmtv_nx_errors.png) に保存しています。
+格子点数と誤差の関係を示す追跡用グラフは [docs/assets/sec1/lbmtv_nx_errors.png](../assets/sec1/lbmtv_nx_errors.png) に保存しています。
 
-<img src="../assets/sec1/lbmtv_nx_errors.png" alt="lbmtv nx-error plot" width="50%">
-
-### 結果の傾向
+### 誤差の傾向
 
 - `Erru` と `Errv` は、格子を細かくするにつれて単調に減少しています。
 - 特に `nx = 5` から `nx = 80` へ細分化すると、速度誤差は約 2 桁以上改善しています。
@@ -313,6 +324,33 @@ $$
 
 密度誤差 `Errp` については値が極めて小さく、丸め誤差や離散化誤差の微妙な影響を受けやすいため、速度誤差ほどきれいな収束次数にはなっていません。このため、本コードの格子収束評価では主に `Erru` と `Errv` を見るのが妥当です。
 
+### 解析結果の解釈
+
+- この結果から、[src/sec1/lbmtv.c](../../src/sec1/lbmtv.c) は Taylor vortex の減衰そのものは正しく再現しており、格子を細かくすると速度場の誤差が系統的に小さくなることが確認できます。
+- 速度誤差がほぼ 2 次で収束していることは、D2Q9 SRT-LBM とこの問題設定の組み合わせが、十分細かい格子では期待どおりの空間精度を示していることを意味します。
+- 一方で、粗い格子では渦構造の空間変化を十分に表現できず、`nx = 5` 付近では速度誤差が大きく、収束次数も理想値より低下します。したがって、この条件は高精度計算というより、実装確認用の最小例とみなすのが適切です。
+- 密度誤差が速度誤差よりはるかに小さいのは、この問題が低マッハ数条件で設定されており、密度変動がもともと小さいためです。そのため、精度評価の主眼は密度よりも速度成分に置くのが自然です。
+
+### 図の生成手順
+
+[docs/assets/sec1/lbmtv_nx_errors.png](../assets/sec1/lbmtv_nx_errors.png) は、リポジトリのルートで次を実行すると再生成できます。
+
+```powershell
+d:/work/LBMcode/.venv/Scripts/python.exe scripts/plot_lbmtv_nx_study.py
+```
+
+このスクリプトは内部で次を順に実行します。
+
+- [scripts/build_lbmtv.cmd](../../scripts/build_lbmtv.cmd) で `lbmtv.exe` をビルドする
+- `nx = 5, 10, 20, 40, 80` の 5 条件で [build/bin/lbmtv.exe](../../build/bin/lbmtv.exe) を実行する
+- 生の出力を `outputs/sec1/lbmtv_nx_study` に保存する
+- 集計表を [docs/sec1/generated/lbmtv_nx_errors.md](generated/lbmtv_nx_errors.md) と [docs/sec1/generated/lbmtv_nx_errors.csv](generated/lbmtv_nx_errors.csv) に保存する
+- 図を [docs/assets/sec1/lbmtv_nx_errors.png](../assets/sec1/lbmtv_nx_errors.png) に保存する
+
+図生成スクリプト全体の一覧は [docs/plot_generation.md](../plot_generation.md) にまとめています。
+
+<img src="../assets/sec1/lbmtv_nx_errors.png" alt="lbmtv nx-error plot" width="75%">
+
 ## 出力ファイル
 
 このプログラムは主に次のファイルを出力します。
@@ -322,16 +360,3 @@ $$
 - `datautve`, `datavtve`, `datartve`: 解析解
 
 なお `datartv` と `datartve` は、コード上で `rho/3.0` と `rhoe/3.0` を出力しています。これは格子ボルツマン法での音速平方 $c_s^2 = 1/3$ を意識して圧力相当量として見たいときの書き方です。
-
-## コードの読み方
-
-[src/sec1/lbmtv.c](../../src/sec1/lbmtv.c) は大きく次の順に読めます。
-
-- 初期条件の設定
-- 離散速度 `cx`, `cy` の設定
-- 平衡分布 `f0` の初期化
-- `collision -> streaming -> macro update` の反復
-- 解析解との誤差評価
-- 出力ファイルの保存
-
-LBM の最小構成を理解する教材として使いやすく、周期境界と解析解を持つため、実装確認にも向いています。

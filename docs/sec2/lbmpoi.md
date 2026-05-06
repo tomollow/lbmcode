@@ -261,9 +261,33 @@ $$
 
 また、出力ファイル [outputs/sec2/lbmpoi/data](../../outputs/sec2/lbmpoi/data) には、中心断面 $x=n_x/2$ の無次元速度分布が 21 点分保存されます。先頭と末尾の値が約 $4.48\times 10^{-4}$、中央が約 $1.00044$ であり、放物線分布に小さな slip が乗った形になっています。
 
+### 解析結果の解釈
+
+- この結果から、[src/sec2/lbmpoi.c](../../src/sec2/lbmpoi.c) は Poiseuille flow の基本的な放物線速度分布を正しく再現できていることが分かります。
+- 最大流速が解析解とよく一致していることは、体積力の与え方と巨視量の再構成が期待どおりに機能していることを示しています。
+- 一方で壁面では完全にゼロ速度にはならず、ごく小さな slip が残ります。これは halfway bounce-back に由来する離散化誤差であり、このコードではその大きさも理論式と整合しています。
+- したがって本プログラムは、Poiseuille flow に対する LBM の基本挙動を確認する教材として適しており、特に壁面境界条件の影響を定量的に観察できる点に特徴があります。
+
 ## tau による定常速度分布比較
 
 `tau = 0.56` と `tau = 3.0` の 2 条件で [src/sec2/lbmpoi.c](../../src/sec2/lbmpoi.c) を実行し、定常速度分布を解析解と比較した図を [docs/assets/sec2/lbmpoi_tau_compare.png](../assets/sec2/lbmpoi_tau_compare.png) に保存しています。図は左に模式図、右に計算結果を配置しており、模式図は教科書の図 2.7 に合わせて、上下壁、左右の周期的境界、体積力 $G_x$、放物線状の流速分布を示す形にしています。
+
+### 図の生成手順
+
+[docs/assets/sec2/lbmpoi_tau_compare.png](../assets/sec2/lbmpoi_tau_compare.png) は、リポジトリのルートで次を実行すると再生成できます。
+
+```powershell
+d:/work/LBMcode/.venv/Scripts/python.exe scripts/plot_lbmpoi_tau_compare.py
+```
+
+このスクリプトは内部で次を順に実行します。
+
+- `tau = 0.56` と `tau = 3.0` の 2 条件を設定する
+- 条件ごとに [src/sec2/lbmpoi.c](../../src/sec2/lbmpoi.c) をビルドして [build/bin/lbmpoi.exe](../../build/bin/lbmpoi.exe) を実行する
+- 生の出力を [outputs/sec2/lbmpoi_tau_0_56/data](../../outputs/sec2/lbmpoi_tau_0_56/data) と [outputs/sec2/lbmpoi_tau_3_0/data](../../outputs/sec2/lbmpoi_tau_3_0/data) に保存する
+- 左側の模式図と右側の速度分布比較図を合成して [docs/assets/sec2/lbmpoi_tau_compare.png](../assets/sec2/lbmpoi_tau_compare.png) に保存する
+
+図生成スクリプト全体の一覧は [docs/plot_generation.md](../plot_generation.md) にまとめています。
 
 - `tau = 0.56`: ○
 - `tau = 3.0`: ×
@@ -283,7 +307,7 @@ $$
 
 となるため、`tau` に依らず 1 本の曲線として表せます。図の表示範囲は横軸 `0.0` から `1.5`、縦軸 `0.0` から `1.0` に固定しています。
 
-<img src="../assets/sec2/lbmpoi_tau_compare.png" alt="lbmpoi tau comparison" width="50%">
+<img src="../assets/sec2/lbmpoi_tau_compare.png" alt="lbmpoi tau comparison" width="75%">
 
 この比較に用いた生の実行結果は [outputs/sec2/lbmpoi_tau_0_56/data](../../outputs/sec2/lbmpoi_tau_0_56/data) と [outputs/sec2/lbmpoi_tau_3_0/data](../../outputs/sec2/lbmpoi_tau_3_0/data) に保存されます。`tau = 3.0` の結果が解析解よりやや右側に出ているのは、緩和時間が大きい条件では壁面 slip の影響が強く、無次元化後も中心付近の速度が解析解より大きめに残るためです。追跡対象の図だけを `docs/assets/sec2` に置き、再生成可能な実行結果は `outputs/sec2` に分離しています。
 

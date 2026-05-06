@@ -189,6 +189,16 @@ int main(int argc, char *argv[])
     }
     fclose(fp);
 
+    fp = fopen("fneq5","w");
+    for(j = 0; j <= ny; j++){
+      u2 = u[nx/2][j]*u[nx/2][j] + v[nx/2][j]*v[nx/2][j];
+      tmp = cx[5]*u[nx/2][j] + cy[5]*v[nx/2][j];
+      fprintf(fp,"%10.8e\n",
+              f[5][nx/2][j]
+            - rho[nx/2][j]*(1.0 +3.0*tmp +9.0/2.0*tmp*tmp -3.0/2.0*u2)/36.0);
+    }
+    fclose(fp);
+
     exit(0);
   }
 
