@@ -30,7 +30,7 @@ def build_executable() -> Path:
     return BUILD_DIR / "lbmcavi.exe"
 
 
-def run_case(executable: Path, ut: float, nx: int) -> tuple[float, float, float, float, float]:
+def run_case(executable: Path, ut: float, nx: int) -> tuple[float, float, float, float]:
     case_dir = OUTPUT_DIR / "lbmcavi_delta_grid_study" / f"nx_{nx}" / f"uwx_{ut:.3f}".replace(".", "_")
     case_dir.mkdir(parents=True, exist_ok=True)
     with (case_dir / "run.log").open("w", encoding="utf-8") as log_file:
@@ -45,7 +45,7 @@ def run_case(executable: Path, ut: float, nx: int) -> tuple[float, float, float,
     with (case_dir / "error").open("r", encoding="utf-8") as file:
         line = file.readline().strip()
     values = [float(value.strip()) for value in line.split(",")]
-    return values[0], values[1], values[2], values[3], values[4]
+    return values[0], values[1], values[2], values[3]
 
 
 def write_csv(rows: list[list[str]]) -> Path:
@@ -59,9 +59,8 @@ def write_csv(rows: list[list[str]]) -> Path:
                 "uwx",
                 "rho_avg",
                 "delta_rms",
-                "delta_textbook",
                 "textbook_table21",
-                "abs_error_textbook_compatible",
+                "abs_error_against_textbook",
             ]
         )
         writer.writerows(rows)
@@ -82,14 +81,13 @@ def main() -> None:
                     f"{result[0]:.6f}",
                     f"{result[1]:.8f}",
                     f"{result[2]:.8e}",
-                    f"{result[3]:.8e}",
                     f"{textbook_value:.8e}",
                     f"{abs_error:.8e}",
                 ]
             )
             print(
                 f"nx={nx:3d}, uwx={ut:.3f}, delta_rms={result[2]:.8e}, "
-                f"delta_textbook={result[3]:.8e}, textbook={textbook_value:.8e}, abs_error={abs_error:.8e}"
+                f"textbook={textbook_value:.8e}, abs_error={abs_error:.8e}"
             )
 
     csv_path = write_csv(rows)
