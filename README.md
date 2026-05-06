@@ -18,6 +18,7 @@
 - `src/sec2/fdlbm.c`: 有限差分格子ボルツマン法による Poiseuille flow
 - `src/sec2/fdmadv.c`: 1 次元移流方程式の有限差分法
 - `src/sec2/lbmbound.c`: 境界条件スキームを比較する Poiseuille flow
+- `docs/sec2/lbmbound.md`: `lbmbound.c` の説明と数式
 - `src/sec2/lbmcavi.c`: compressibility error を含む cavity flow
 - `src/sec2/lbmpoi.c`: 格子ボルツマン法による Poiseuille flow
 - `src/sec3/lbmnc.c`: double-population thermal LBM による自然対流

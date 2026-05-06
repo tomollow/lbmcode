@@ -46,35 +46,52 @@
 #include <math.h>
 #include <stdlib.h>
 
-# define DIM 24
+# define DIM 128
 
-int main(void)
+int main(int argc, char *argv[])
 {
   FILE   *fp;
-  int    nx = 20, ny = 20, time = 0, loop1, loop2;
+  int    nx = 20, ny = 20, time = 0, loop1, loop2, max_time, max_loop1, converged = 0;
   int    i, j, k, in, jn, ip, im, nb, flag;
-  double u[DIM][DIM], v[DIM][DIM], un[DIM][DIM], vn[DIM][DIM], ue[DIM][DIM], rho[DIM][DIM];
-  double f[9][DIM][DIM], f0[9][DIM][DIM], ftmp[9][DIM][DIM], cx[9], cy[9];
+  int    quiet = 0;
+  static double u[DIM][DIM], v[DIM][DIM], un[DIM][DIM], vn[DIM][DIM], ue[DIM][DIM], rho[DIM][DIM];
+  static double f[9][DIM][DIM], f0[9][DIM][DIM], ftmp[9][DIM][DIM];
+  double cx[9], cy[9];
   double gx = 0.00001, gy = 0.0, ut = 0.0, vt = 0.0, ub = 0.0, vb = 0.0, q = 0.25;
   double h, tmp, u2, nu, norm, err, rhod, us, stress;
   double tau = 0.56;
 //  double tau = 3.00;
-  char   a[DIM][DIM];
+  static char   a[DIM][DIM];
+
+  if(argc >= 2){ tau = atof(argv[1]); }
+  if(argc >= 3){ nx = atoi(argv[2]); }
+  if(argc >= 4){ quiet = atoi(argv[3]); }
+  ny = nx;
+
+  if(nx < 1 || nx > DIM - 2){
+    fprintf(stderr, "nx must satisfy 1 <= nx <= %d\n", DIM - 2);
+    return 1;
+  }
 
   flag = 1;
-  printf("Select number (1- 7)\n");
-  printf("1: Equilibrium\n");
-  printf("2: On-grid bounce back\n");
-  printf("3: No-slip boundary (Inamuro)\n");
-  printf("4: Non-equilibrium bounce back (Zou)\n");
-  printf("5: Half-way bounce back\n");
-  printf("6: Interpolated bounce back (Linear)\n");
-  printf("7: Interpolated bounce back (Quadratic)\n");
-  printf("Enter  1- 7 \n");
+  if(quiet == 0){
+    printf("Select number (1- 7)\n");
+    printf("1: Equilibrium\n");
+    printf("2: On-grid bounce back\n");
+    printf("3: No-slip boundary (Inamuro)\n");
+    printf("4: Non-equilibrium bounce back (Zou)\n");
+    printf("5: Half-way bounce back\n");
+    printf("6: Interpolated bounce back (Linear)\n");
+    printf("7: Interpolated bounce back (Quadratic)\n");
+    printf("Enter  1- 7 \n");
+  }
   scanf("%d", &flag);
 
   // initial condition
   nu = (tau - 0.5)/3.0;
+  max_time = 100000;
+  if(100*nx*nx > max_time){ max_time = 100*nx*nx; }
+  max_loop1 = (max_time + 199)/200;
 
   h = (double)ny;
 
@@ -118,7 +135,7 @@ int main(void)
   } } }
 
 // calculation start
-  for(loop1 = 0; loop1 < 500; loop1++){
+  for(loop1 = 0; loop1 < max_loop1; loop1++){
   for(loop2 = 0; loop2 < 200; loop2++){
     time++;
 
@@ -394,35 +411,35 @@ int main(void)
 
   } //loop2
   
-  printf("Time = %d, Norm = %8.6e\n", time, norm);
-  if(flag == 1){ printf("Error = %8.6e(Equilibrium)\n",err);
+  if(quiet == 0){ printf("Time = %d, Norm = %8.6e\n", time, norm); }
+  if(flag == 1){ if(quiet == 0){ printf("Error = %8.6e(Equilibrium)\n",err);
                  if(gx > 0.0){ printf("Slip = %8.6e(%6.4e)\n",
                    u[nx/2][0]*8.0*nu/gx/h/h,8.0*tau*(2.0*tau - 1.0)/3.0/h/h);}
                  printf("ub[0] = %8.6e(%6.4e), ut[0] = %8.6e(%6.4e)\n",u[nx/2][0],ub,u[nx/2][ny],ut);
                  printf("ub[1] = %8.6e(%6.4e), ut[1] = %8.6e(%6.4e)\n",
-                 u[nx/2][1],ue[nx/2][1],u[nx/2][ny-1],ue[nx/2][ny-1]);
+                 u[nx/2][1],ue[nx/2][1],u[nx/2][ny-1],ue[nx/2][ny-1]); }
                }
-  if(flag == 2){ printf("Error = %8.6e(On-grid bounce back)\n",err);
+  if(flag == 2){ if(quiet == 0){ printf("Error = %8.6e(On-grid bounce back)\n",err);
                  if(gx > 0.0){ printf("Slip = %8.6e(%6.4e)\n",
                    u[nx/2][0]*8.0*nu/gx/h/h,8.0*tau*(2.0*tau - 1.0)/3.0/h/h);}
                  printf("ub[0] = %8.6e(%6.4e), ut[0] = %8.6e(%6.4e)\n",u[nx/2][0],ub,u[nx/2][ny],ut);
                  printf("ub[1] = %8.6e(%6.4e), ut[1] = %8.6e(%6.4e)\n",
-                 u[nx/2][1],ue[nx/2][1],u[nx/2][ny-1],ue[nx/2][ny-1]);
+                 u[nx/2][1],ue[nx/2][1],u[nx/2][ny-1],ue[nx/2][ny-1]); }
                  fp = fopen("slipbb.txt","w");
                  fprintf(fp,"%16.8e\n", u[nx/2][0]*8.0*nu/gx/h/h);
                  fclose(fp);
                }
-  if(flag == 3){ printf("Error = %8.6e(No-slip boundary (Inamuro))\n",err);
+  if(flag == 3){ if(quiet == 0){ printf("Error = %8.6e(No-slip boundary (Inamuro))\n",err);
                  printf("ub[0] = %8.6e(%6.4e), ut[0] = %8.6e(%6.4e)\n",u[nx/2][0],ub,u[nx/2][ny],ut);
                  printf("ub[1] = %8.6e(%6.4e), ut[1] = %8.6e(%6.4e)\n",
-                 u[nx/2][1],ue[nx/2][1],u[nx/2][ny-1],ue[nx/2][ny-1]);
+                 u[nx/2][1],ue[nx/2][1],u[nx/2][ny-1],ue[nx/2][ny-1]); }
                }
-  if(flag == 4){ printf("Error = %8.6e(Non-equilibrium bounce back (Zou))\n",err);
+  if(flag == 4){ if(quiet == 0){ printf("Error = %8.6e(Non-equilibrium bounce back (Zou))\n",err);
                  printf("ub[0] = %8.6e(%6.4e), ut[0] = %8.6e(%6.4e)\n",u[nx/2][0],ub,u[nx/2][ny],ut);
                  printf("ub[1] = %8.6e(%6.4e), ut[1] = %8.6e(%6.4e)\n",
-                 u[nx/2][1],ue[nx/2][1],u[nx/2][ny-1],ue[nx/2][ny-1]);
+                 u[nx/2][1],ue[nx/2][1],u[nx/2][ny-1],ue[nx/2][ny-1]); }
                }
-  if(flag == 5){ printf("Error = %8.6e(Half-way bounce back)\n",err);
+  if(flag == 5){ if(quiet == 0){ printf("Error = %8.6e(Half-way bounce back)\n",err);
                  if(gx > 0.0){
                    printf("Slip = %8.6e(%6.4e)\n",
                    (u[nx/2][1] - ue[nx/2][1])*8.0*nu/gx/h/h,(16.0*tau*tau - 20.0*tau + 3.0)/3.0/h/h);
@@ -431,83 +448,88 @@ int main(void)
                  printf("ub[1] = %8.6e(%6.4e), ut[1] = %8.6e(%6.4e)\n",
                  u[nx/2][1],ue[nx/2][1],u[nx/2][ny-1],ue[nx/2][ny-1]);
                  printf("ub[2] = %8.6e(%6.4e), ut[2] = %8.6e(%6.4e)\n",
-                 u[nx/2][2],ue[nx/2][2],u[nx/2][ny-2],ue[nx/2][ny-2]);
+                 u[nx/2][2],ue[nx/2][2],u[nx/2][ny-2],ue[nx/2][ny-2]); }
 
                  fp = fopen("sliphbb.txt","w");
                  fprintf(fp,"%16.8e\n",(u[nx/2][1] - ue[nx/2][1])*8.0*nu/gx/h/h);
                  fclose(fp);
                }
-  if(flag == 6){ printf("Error = %8.6e(Interpolated bounce back (Linear))\n",err);
+  if(flag == 6){ if(quiet == 0){ printf("Error = %8.6e(Interpolated bounce back (Linear))\n",err);
                  if(gx > 0.0 || q <0.5){ printf("Slip = %8.6e(%6.4e)\n",
                    (u[nx/2][1] - ue[nx/2][1])*8.0*nu/gx/h/h,(16.0*tau*tau - 8.0*tau - 24.0*q*tau +12.0*q - 12.0*q*q)/3.0/h/h);}
                  printf("ub[1] = %8.6e(%6.4e), ut[1] = %8.6e(%6.4e)\n",
                  u[nx/2][1],ue[nx/2][1],u[nx/2][ny-1],ue[nx/2][ny-1]);
                  printf("ub[2] = %8.6e(%6.4e), ut[2] = %8.6e(%6.4e)\n",
-                 u[nx/2][2],ue[nx/2][2],u[nx/2][ny-2],ue[nx/2][ny-2]);
+                 u[nx/2][2],ue[nx/2][2],u[nx/2][ny-2],ue[nx/2][ny-2]); }
 
                  fp = fopen("slipibb.txt","w");
                  fprintf(fp,"%16.8e\n",(u[nx/2][1] - ue[nx/2][1])*8.0*nu/gx/h/h);
                  fclose(fp);
                }
-  if(flag == 7){ printf("Error = %8.6e(Interpolated bounce back (Quadratic))\n",err);
+  if(flag == 7){ if(quiet == 0){ printf("Error = %8.6e(Interpolated bounce back (Quadratic))\n",err);
                  if(gx > 0.0 || q <0.5){ printf("Slip = %8.6e(%6.4e)\n",
                    (u[nx/2][1] - ue[nx/2][1])*8.0*nu/gx/h/h,(16.0*tau*tau - 8.0*tau - 24.0*q*tau + 12.0*q*q)/3.0/h/h);}
                  printf("ub[1] = %8.6e(%6.4e), ut[1] = %8.6e(%6.4e)\n",
                  u[nx/2][1],ue[nx/2][1],u[nx/2][ny-1],ue[nx/2][ny-1]);
                  printf("ub[2] = %8.6e(%6.4e), ut[2] = %8.6e(%6.4e)\n",
-                 u[nx/2][2],ue[nx/2][2],u[nx/2][ny-2],ue[nx/2][ny-2]);
+                 u[nx/2][2],ue[nx/2][2],u[nx/2][ny-2],ue[nx/2][ny-2]); }
                 }
 
+  if(quiet == 0){
+    for(i = 0; i <= nx; i++){ for(j = 0; j <= ny; j++){
+      a[i][j]='0';
+    } }
 
-  for(i = 0; i <= nx; i++){ for(j = 0; j <= ny; j++){
-    a[i][j]='0';
-  } }
-
-  for(j = 0; j <= ny; j++){
-    nb = u[nx/2][j]/(ut + gx/nu/8.0*h*h)*nx;
-    for(i = 0; i <= nb; i++){
-      a[i][j]= '-';
-    }
-  }
-
-  if(flag <= 4){
-    for(j = ny; j >= 0; j--){ for(i = 0; i <= nx; i++){
-      printf("%c",a[i][j]);
+    for(j = 0; j <= ny; j++){
+      nb = u[nx/2][j]/(ut + gx/nu/8.0*h*h)*nx;
+      for(i = 0; i <= nb; i++){
+        a[i][j]= '-';
       }
-      printf("\n");
     }
-  }else {
-    for(j = ny - 1; j >= 1; j--){ for(i = 0; i <= nx; i++){
-      printf("%c",a[i][j]);
+
+    if(flag <= 4){
+      for(j = ny; j >= 0; j--){ for(i = 0; i <= nx; i++){
+        printf("%c",a[i][j]);
+        }
+        printf("\n");
       }
-      printf("\n");
+    }else {
+      for(j = ny - 1; j >= 1; j--){ for(i = 0; i <= nx; i++){
+        printf("%c",a[i][j]);
+        }
+        printf("\n");
+      }
     }
   }
 
   if(norm < 0.0000000001 && time > 10000){ 
-
-    fp = fopen("data","w");
-    for(j = 0; j <= ny; j++){
-     fprintf(fp,"%10.8e\n", u[nx/2][j]/(gx/nu/8.0*h*h));
-    }
-    fclose(fp);
-
-    if(flag >= 5){
-     fp = fopen("data","w");
-      for(j = 1; j <= ny-1; j++){
-       fprintf(fp,"%10.8e\n", u[nx/2][j]/(gx/nu/8.0*h*h));
-      }
-      fclose(fp);
-    }
-
-    fp = fopen("error","w");
-    fprintf(fp,"%15.8e\n", err);
-    fclose(fp);
-
-    exit(0);
+    converged = 1;
+    break;
   }
 
+  if(time >= max_time){ break; }
   } //loop1
+
+  fp = fopen("data","w");
+  for(j = 0; j <= ny; j++){
+    fprintf(fp,"%10.8e\n", u[nx/2][j]/(gx/nu/8.0*h*h));
+  }
+  fclose(fp);
+
+  if(flag >= 5){
+    fp = fopen("data","w");
+    for(j = 1; j <= ny-1; j++){
+      fprintf(fp,"%10.8e\n", u[nx/2][j]/(gx/nu/8.0*h*h));
+    }
+    fclose(fp);
+  }
+
+  fp = fopen("error","w");
+  fprintf(fp,"%15.8e\n", err);
+  fclose(fp);
+
+  printf("FINAL time=%d norm=%8.6e err=%8.6e converged=%d max_time=%d\n",
+         time, norm, err, converged, max_time);
 
   return 0;
 }
