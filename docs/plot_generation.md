@@ -23,7 +23,11 @@ d:/work/LBMcode/.venv/Scripts/python.exe scripts/<script-name>.py
 
 - [scripts/plot_poiseuille_comparison.py](../scripts/plot_poiseuille_comparison.py)
   - 用途: Poiseuille flow の比較図を作る
-  - 主な出力: `outputs/sec2/poiseuille_profile_comparison.png`
+  - 主な出力: [docs/assets/sec2/poiseuille_profile_comparison.png](assets/sec2/poiseuille_profile_comparison.png)
+
+- [scripts/plot_fdlbm_profile.py](../scripts/plot_fdlbm_profile.py)
+  - 用途: `fdlbm.c` の中心断面速度分布と解析解の比較図を作る
+  - 主な出力: [docs/assets/sec2/fdlbm_profile.png](assets/sec2/fdlbm_profile.png)
 
 - [scripts/plot_lbmpoi_tau_compare.py](../scripts/plot_lbmpoi_tau_compare.py)
   - 用途: `tau` を変えたときの Poiseuille flow 速度分布比較図を作る

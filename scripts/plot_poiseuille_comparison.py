@@ -11,6 +11,25 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 BUILD_DIR = ROOT_DIR / "build" / "bin"
 OUTPUT_DIR = ROOT_DIR / "outputs"
 SECTION_OUTPUT_DIR = OUTPUT_DIR / "sec2"
+PUBLISHED_ASSET_DIR = ROOT_DIR / "docs" / "assets" / "sec2"
+
+GX = 1.0e-5
+LBM_NY = 20
+LBM_TAU = 0.56
+FDLBM_NY = 22
+FDLBM_TAU = 0.06
+H = 20.0
+
+plt.rcParams["font.family"] = "sans-serif"
+plt.rcParams["font.sans-serif"] = [
+    "Yu Gothic",
+    "Meiryo",
+    "MS Gothic",
+    "Noto Sans CJK JP",
+    "DejaVu Sans",
+]
+plt.rcParams["axes.unicode_minus"] = False
+plt.rcParams["mathtext.fontset"] = "dejavusans"
 
 CASES = [
     {
@@ -20,6 +39,9 @@ CASES = [
         "output_dir": SECTION_OUTPUT_DIR / "lbmpoi",
         "output_file": "data",
         "marker": "o",
+        "tau": LBM_TAU,
+        "h": float(LBM_NY),
+        "y_offset": 0.0,
     },
     {
         "name": "FDLBM",
@@ -28,6 +50,9 @@ CASES = [
         "output_dir": SECTION_OUTPUT_DIR / "fdlbm",
         "output_file": "data",
         "marker": "x",
+        "tau": FDLBM_TAU,
+        "h": float(FDLBM_NY - 2),
+        "y_offset": -1.0,
     },
 ]
 
@@ -56,57 +81,42 @@ def read_profile(file_path: Path) -> np.ndarray:
     return np.array(values, dtype=float)
 
 
-def normalize_profile(profile: np.ndarray) -> np.ndarray:
-    return profile / np.max(profile)
+def viscosity(case: dict[str, object]) -> float:
+    tau = float(case["tau"])
+    if case["name"] == "FDLBM":
+        return tau / 3.0
+    return (tau - 0.5) / 3.0
 
 
-def analytical_profile(point_count: int) -> tuple[np.ndarray, np.ndarray]:
-    y = np.linspace(0.0, 1.0, point_count)
-    u = 4.0 * y * (1.0 - y)
-    return y, u
+def physical_profile(case: dict[str, object], normalized_profile: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:
+    h = float(case["h"])
+    nu = viscosity(case)
+    u_max = GX * h * h / (8.0 * nu)
+    y = np.arange(len(normalized_profile), dtype=float) + float(case["y_offset"])
+    u = normalized_profile * u_max
+    return y, u, u_max
 
 
-def draw_schematic(axis: plt.Axes) -> None:
-    axis.set_xlim(0.0, 10.0)
-    axis.set_ylim(0.0, 4.0)
-    axis.plot([1.0, 9.0], [3.0, 3.0], color="black", linewidth=2.0)
-    axis.plot([1.0, 9.0], [1.0, 1.0], color="black", linewidth=2.0)
-    axis.arrow(2.0, 2.0, 5.0, 0.0, width=0.06, head_width=0.25, head_length=0.35,
-               length_includes_head=True, color="tab:blue")
-    axis.arrow(2.0, 2.5, 4.0, 0.0, width=0.03, head_width=0.18, head_length=0.25,
-               length_includes_head=True, color="tab:gray", alpha=0.7)
-    axis.arrow(2.0, 1.5, 4.0, 0.0, width=0.03, head_width=0.18, head_length=0.25,
-               length_includes_head=True, color="tab:gray", alpha=0.7)
-    axis.text(5.0, 3.2, "upper plate", ha="center", va="bottom")
-    axis.text(5.0, 0.8, "lower plate", ha="center", va="top")
-    axis.text(7.4, 2.2, "flow direction", color="tab:blue")
-    axis.text(1.2, 3.4, "2D parallel-plate channel", fontsize=12, weight="bold")
-    axis.annotate("channel width H", xy=(8.8, 1.0), xytext=(8.8, 3.0),
-                  arrowprops={"arrowstyle": "<->", "lw": 1.2},
-                  ha="left", va="center")
-    axis.axis("off")
+def analytical_profile() -> tuple[np.ndarray, np.ndarray, float]:
+    nu = (LBM_TAU - 0.5) / 3.0
+    y = np.linspace(0.0, H, 300)
+    u = GX * y * (H - y) / (2.0 * nu)
+    u_max = GX * H * H / (8.0 * nu)
+    return y, u, u_max
 
 
 def main() -> None:
     profiles = []
-    analytical_y = None
-    analytical_u = None
+    analytical_y, analytical_u, analytical_u_max = analytical_profile()
 
     for case in CASES:
-      build_case(case["source"])
-      run_case(case["exe"], case["output_dir"])
-      profile = read_profile(case["output_dir"] / case["output_file"])
-      y = np.linspace(0.0, 1.0, len(profile))
-      profiles.append((case, y, normalize_profile(profile)))
-      if analytical_y is None:
-          analytical_y, analytical_u = analytical_profile(len(profile))
+        build_case(case["source"])
+        run_case(case["exe"], case["output_dir"])
+        normalized_profile = read_profile(case["output_dir"] / case["output_file"])
+        y, profile, _ = physical_profile(case, normalized_profile)
+        profiles.append((case, y, profile))
 
-    figure = plt.figure(figsize=(8, 10))
-    grid = figure.add_gridspec(2, 1, height_ratios=[1, 2])
-    schematic_axis = figure.add_subplot(grid[0, 0])
-    profile_axis = figure.add_subplot(grid[1, 0])
-
-    draw_schematic(schematic_axis)
+    figure, profile_axis = plt.subplots(figsize=(7.2, 6.8), constrained_layout=True)
 
     for case, y, profile in profiles:
         profile_axis.plot(
@@ -121,19 +131,34 @@ def main() -> None:
 
     profile_axis.plot(analytical_u, analytical_y, linestyle="-", color="black", linewidth=1.8,
                       label="Analytical")
-    profile_axis.set_xlabel("Normalized velocity u / u_max")
-    profile_axis.set_ylabel("Channel width direction y / H")
-    profile_axis.set_title("Steady velocity profile in a 2D parallel-plate channel")
+    profile_axis.set_xlabel(r"$u_x$")
+    profile_axis.set_ylabel(r"$y$")
+    profile_axis.set_title("Poiseuille flow velocity profile comparison")
     profile_axis.grid(True, linestyle=":", alpha=0.6)
     profile_axis.legend(loc="best")
     profile_axis.set_xlim(left=0.0)
-    profile_axis.set_ylim(0.0, 1.0)
+    profile_axis.set_ylim(0.0, H)
+    profile_axis.set_yticks(np.arange(0.0, H + 0.1, 5.0))
 
-    figure.tight_layout()
+    top_axis = profile_axis.secondary_xaxis(
+        "top",
+        functions=(lambda value: value / analytical_u_max, lambda value: value * analytical_u_max),
+    )
+    top_axis.set_xlabel(r"$u_x/u_{\max}$")
+    right_axis = profile_axis.secondary_yaxis(
+        "right",
+        functions=(lambda value: value / H, lambda value: value * H),
+    )
+    right_axis.set_ylabel(r"$y/h$")
+
     SECTION_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    PUBLISHED_ASSET_DIR.mkdir(parents=True, exist_ok=True)
     output_path = SECTION_OUTPUT_DIR / "poiseuille_profile_comparison.png"
+    published_path = PUBLISHED_ASSET_DIR / "poiseuille_profile_comparison.png"
     figure.savefig(output_path, dpi=200)
+    figure.savefig(published_path, dpi=200)
     print(f"Saved plot to {output_path}")
+    print(f"Saved plot to {published_path}")
 
 
 if __name__ == "__main__":

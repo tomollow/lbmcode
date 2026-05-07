@@ -16,6 +16,7 @@
 - `src/sec1/lbmtv.c`: Taylor vortex flow
 - `docs/sec1/lbmtv.md`: `lbmtv.c` の説明と数式
 - `src/sec2/fdlbm.c`: 有限差分格子ボルツマン法による Poiseuille flow
+- `docs/sec2/fdlbm.md`: `fdlbm.c` の説明と数式
 - `src/sec2/fdmadv.c`: 1 次元移流方程式の有限差分法
 - `src/sec2/lbmbound.c`: 境界条件スキームを比較する Poiseuille flow
 - `docs/sec2/lbmbound.md`: `lbmbound.c` の説明と数式
