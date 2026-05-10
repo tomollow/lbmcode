@@ -5,21 +5,36 @@
 左図：LBM計算（青）と層流 Poiseuille 予測（橙破線）の比較。$k$-$\varepsilon$ が活性化していれば、$\nu_t$ により実効粘性が増し、LBM プロファイルは層流予測より低く・平坦になります。
 
 右図：渦粘性 $\nu_t/\nu_0$ の y 方向分布。壁関数で $k_{\text{wall}} = u_\tau^2/\sqrt{C_\mu}$、$\varepsilon_{\text{wall}} = u_\tau^3/(\kappa\,\Delta y)$ を Dirichlet 注入し、バルク全域で $\nu_t/\nu_0 \approx 0.15$–$0.20$ の渦粘性が発達しています。
-## 理論分布との比較・検証方法
+## 検証方法（k-ε 活性化の比較）
 
-本コードの物理的妥当性を確認するため、数値計算結果と理論分布（例：チャンネル流れのパラボラ型速度分布）を比較することが重要です。
+本コードは $k$-$\varepsilon$ モデルが活性化する遷移域（$Re_\tau \approx 47$）に設定されています。検証では数値解と**層流予測**（パラボラ型）を比較し、$\nu_t$ による減速を観測します。
 
-### 比較図の作成方法
+### 比較プロットの作成
 
-付属スクリプト `scripts/plot_kelbm_compare_theory.py` を実行すると、
+付属スクリプト [scripts/plot_kelbm_compare_theory.py](../../scripts/plot_kelbm_compare_theory.py) を実行すると、左右2枚のサブプロットを描画します：
 
-- y方向中心断面（x=NX/2）の $u$ 分布
-- 理論分布 $u_{\mathrm{theory}}(y) = U_{\max} \left[1 - \left(\dfrac{y - y_c}{NY/2}\right)^2\right],\ y_c = \dfrac{NY-1}{2}$
+- **左**: 速度 $u(y)$ のプロファイル
+  - LBM 計算値（実線）
+  - 層流 Poiseuille 予測 $u_{\mathrm{lam}}(y) = u_{\max}^{\mathrm{lam}} \left[1 - \left(\dfrac{y - y_c}{NY/2}\right)^2\right]$、$u_{\max}^{\mathrm{lam}} = F_x H^2 / (8\nu_0)$（破線）
+- **右**: 渦粘性比 $\nu_t/\nu_0 = C_\mu k^2/(\varepsilon \nu_0)$ の y 方向分布
 
-が重ねて描画され、`kelbm_compare_theory.png` として画像保存されます。
-ハーフウェイ bounce-back では壁が $y = -0.5$ と $y = NY-0.5$ に位置するため、半幅は $NY/2$、流路中心は $y_c = (NY-1)/2$ となります。
+$k$-$\varepsilon$ が無効なら層流予測と一致するはずですが、本パラメータでは $u_{\max}^{\mathrm{lam}} = 0.375$ が LBM の Mach 安定限界（$|u| \lesssim 0.1$）を超えるため、$\nu_t$ による減速がなければ計算は破綻します。実際には $\nu_t \neq 0$ により $u_{\max} \approx 0.139$ で安定するため、この差自体が k-ε モデルの正常動作を示します。
 
 #### 実行例
+
+ビルド・シミュレーション・プロット生成を一括で行うランナースクリプトを使うのが推奨です：
+
+```powershell
+pwsh scripts/run_kelbm.ps1
+```
+
+これは内部で次を実行します：
+
+1. `scripts/build_one.cmd src/sec4/kelbm.c` で `build/bin/kelbm.exe` をビルド
+2. `outputs/sec4/kelbm/` 配下で `kelbm.exe` を実行し `kelbm_output.csv` を生成
+3. プロットスクリプト 4 本（[plot_kelbm_compare_theory.py](../../scripts/plot_kelbm_compare_theory.py)、[plot_kelbm_contour.py](../../scripts/plot_kelbm_contour.py)、[plot_kelbm_centerline.py](../../scripts/plot_kelbm_centerline.py)、[plot_kelbm_output.py](../../scripts/plot_kelbm_output.py)）を順次実行し、PNG を `outputs/sec4/` と `docs/assets/sec4/` に保存
+
+`-SkipPlot` を渡すとプロット生成をスキップ。プロット単体で再生成したい場合は個別に Python スクリプトを呼べます：
 
 ```powershell
 python scripts/plot_kelbm_compare_theory.py
@@ -42,14 +57,11 @@ $k$ の2次元分布：
 $\varepsilon$ の2次元分布：
 ![εの2次元分布コンター](../assets/sec4/kelbm_contour_epsilon.png)
 
-### 比較の意義
+### コンター図で確認するポイント
 
-数値解と理論分布がよく一致していれば、
-- LBM本体
-- k-ε乱流モデルの実装
-が物理的に正しく動作していることの有力な証拠となります。
-
-また、$k$ や $\varepsilon$ の分布も壁近傍で大きく、中心で小さくなることを確認してください。
+- $u$: 流れ方向に並進不変（x 方向に均一）、$y$ 方向にプロファイルを示す。層流予測のパラボラより**平坦化**していれば $\nu_t$ が効いている
+- $k$: 壁関数注入により壁近傍で最大、バルクではほぼ一定値に近づく
+- $\varepsilon$: 壁近傍で大きく、バルクでは小さい（壁で生成された乱流エネルギーが散逸する形）
 # kelbm.c 説明ドキュメント
 
 ## 概要
@@ -85,7 +97,7 @@ $$
 F_k = \left(1 - \frac{\omega}{2}\right) w_k \left[3(\mathbf{c}_k - \mathbf{u}) + 9(\mathbf{c}_k \cdot \mathbf{u})\,\mathbf{c}_k\right] \cdot \mathbf{F}
 $$
 
-で、本コードでは $\mathbf{F} = (F_x, 0)$、$F_x = 5\times 10^{-5}$ を $x$ 方向に一様に与えます。マクロ速度はハーフステップ補正
+で、本コードでは $\mathbf{F} = (F_x, 0)$、$F_x = 5\times 10^{-6}$ を $x$ 方向に一様に与えます。マクロ速度はハーフステップ補正
 
 $$
 \rho \mathbf{u} = \sum_k f_k \mathbf{c}_k + \frac{\Delta t}{2}\,\mathbf{F}
@@ -95,7 +107,7 @@ $$
 
 ### 2. 標準 $k$-$\varepsilon$ モデル
 
-本コードは対流・拡散・生成・散逸項を含む標準型 $k$-$\varepsilon$ 輸送方程式を実装しています（壁関数は含みません）。
+本コードは対流・拡散・生成・散逸項を含む標準型 $k$-$\varepsilon$ 輸送方程式に加え、第1流体セルへの高 Re 壁関数（Dirichlet）を実装しています。
 
 #### 生成項
 
@@ -127,7 +139,7 @@ $$
 + C_{\varepsilon 1}\frac{P_k\,\varepsilon}{k} - C_{\varepsilon 2}\frac{\varepsilon^2}{k}
 $$
 
-実効拡散係数は $D_k = \nu_0 + \nu_t/\sigma_k$、$D_\varepsilon = \nu_0 + \nu_t/\sigma_\varepsilon$。LBM分子動粘性は $\nu_0 = c_s^2(\tau - 1/2) = 1/6$（$\tau=1$）です。
+実効拡散係数は $D_k = \nu_0 + \nu_t/\sigma_k$、$D_\varepsilon = \nu_0 + \nu_t/\sigma_\varepsilon$。LBM分子動粘性は $\nu_0 = c_s^2(\tau - 1/2) = (\tau - 1/2)/3$ で、本実装の $\tau=0.55$ では $\nu_0 \approx 0.0167$ です。
 
 #### モデル定数
 
@@ -157,6 +169,19 @@ D_\varepsilon\, \nabla^2 \varepsilon - (\mathbf{u}\cdot\nabla \varepsilon)_{\tex
 $$
 
 数値安定性のため、各ステップ後に $k,\varepsilon \ge 10^{-8}$ の下限を課します（ゼロ割回避にはさらに $10^{-12}$ の正則化を加算）。
+
+#### 壁関数（Dirichlet）
+
+第1流体セル（halfway bounce-back の壁から $\Delta y = 0.5$）に対して、対数領域の局所平衡から得られる値を毎ステップ Dirichlet 上書きします：
+
+$$
+k_{\mathrm{wall}} = \frac{u_\tau^2}{\sqrt{C_\mu}},\qquad
+\varepsilon_{\mathrm{wall}} = \frac{u_\tau^3}{\kappa\,\Delta y}
+$$
+
+ここで $\kappa = 0.41$（von Karman 定数）、摩擦速度は力学平衡 $u_\tau = \sqrt{F_x\,\delta}$（$\delta = NY/2$）から評価しています。これにより壁近傍で $k$ が枯渇しないため、$\nu_t = C_\mu k^2/\varepsilon$ がバルクまで伝搬して非自明な渦粘性プロファイルが立ち上がります。
+
+形式的には高 Re 壁関数は $y^+ = u_\tau \Delta y / \nu_0 \gtrsim 30$ で有効ですが、本ケースでは $y^+_1 \approx 0.5$ で範囲外です。実態としては「k-ε ソース項を壁付近で有限に保つための注入器」として作用しており、低 Re k-ε モデル（Launder-Sharma など）で置き換えるとより物理的に正確になります。
 
 ## 変数と配列
 

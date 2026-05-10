@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -17,10 +16,9 @@ NX = df['x'].max() + 1
 NY = df['y'].max() + 1
 
 def to_grid(var):
-    arr = np.zeros((NY, NX))
-    for _, row in df.iterrows():
-        arr[int(row['y']), int(row['x'])] = row[var]
-    return arr
+    return df.pivot(index='y', columns='x', values=var).reindex(
+        index=range(NY), columns=range(NX)
+    ).values
 
 u = to_grid('u')
 k = to_grid('k')

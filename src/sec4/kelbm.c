@@ -1,7 +1,8 @@
 // kelbm.c
 // 2D LBM + k-epsilon turbulence model (channel flow test case)
-// Domain: 50x50, periodic in x, bounce-back walls at y=0 and y=NY-1
-// Driven by constant body force in x direction (Guo forcing)
+// Domain: NX x NY, periodic in x, halfway bounce-back walls at y=0 and y=NY-1
+// Driven by constant body force in x direction (Guo forcing 2002)
+// Wall functions (Dirichlet) for k, eps at the first off-wall fluid cells
 // Output: u,v,k,epsilon as CSV
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,9 +28,13 @@ const int opp[NDIR] = {0,3,4,1,2,7,8,5,6};
 // Macros
 #define IDX(x,y) ((x) + NX*(y))
 
+// Distribution function buffers — swapped via pointers each step (no memcpy)
+static double f_buf_a[NX*NY*NDIR];
+static double f_buf_b[NX*NY*NDIR];
+static double *f = f_buf_a;
+static double *f2 = f_buf_b;
+
 // Main variables
-static double f[NX*NY*NDIR];
-static double f2[NX*NY*NDIR];
 static double u[NX*NY], v[NX*NY], rho[NX*NY];
 static double k[NX*NY], eps[NX*NY];
 
@@ -93,8 +98,8 @@ void stream_collide() {
             }
         }
     }
-    // Swap
-    for(int i=0; i<NX*NY*NDIR; ++i) f[i] = f2[i];
+    // Swap pointers (avoids 2*NX*NY*NDIR memory writes per step)
+    double *tmp = f; f = f2; f2 = tmp;
 }
 
 void macroscopic() {
@@ -117,7 +122,9 @@ void macroscopic() {
 }
 
 void update_kepsilon() {
-    // 標準k-ε輸送方程式（陽解法）。x方向は周期境界、y方向は壁（Neumannゼロ勾配）
+    // 標準k-ε輸送方程式（陽解法）。x方向は周期境界、y方向は壁。
+    // バルクの y 境界はミラー（Neumann）で扱い、第1流体セル(y=0, y=NY-1)は
+    // 末尾で壁関数値を Dirichlet 上書きする。
     double dx = 1.0, dy = 1.0, dt = 0.01;
     for(int y=0; y<NY; ++y) {
         for(int x=0; x<NX; ++x) {
@@ -208,7 +215,7 @@ void output_csv(const char* fname) {
     for(int y=0; y<NY; ++y) {
         for(int x=0; x<NX; ++x) {
             int i = IDX(x,y);
-            fprintf(fp, "%d,%d,%g,%g,%g,%g\n", x, y, u[i], v[i], k[i], eps[i]);
+            fprintf(fp, "%d,%d,%.9g,%.9g,%.9g,%.9g\n", x, y, u[i], v[i], k[i], eps[i]);
         }
     }
     fclose(fp);
