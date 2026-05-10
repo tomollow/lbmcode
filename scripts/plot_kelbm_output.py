@@ -27,22 +27,19 @@ v = to_grid('v')
 k = to_grid('k')
 eps = to_grid('epsilon')
 
-fig, axs = plt.subplots(2, 2, figsize=(10, 9))
-im0 = axs[0, 0].imshow(u, origin='lower', cmap='jet')
-axs[0, 0].set_title('u (x方向速度)')
-plt.colorbar(im0, ax=axs[0, 0])
-
-im1 = axs[0, 1].imshow(v, origin='lower', cmap='jet')
-axs[0, 1].set_title('v (y方向速度)')
-plt.colorbar(im1, ax=axs[0, 1])
-
-im2 = axs[1, 0].imshow(k, origin='lower', cmap='plasma')
-axs[1, 0].set_title('k (乱流エネルギー)')
-plt.colorbar(im2, ax=axs[1, 0])
-
-im3 = axs[1, 1].imshow(eps, origin='lower', cmap='plasma')
-axs[1, 1].set_title(r'$\varepsilon$ (散逸率)')
-plt.colorbar(im3, ax=axs[1, 1])
+fig, axs = plt.subplots(2, 2, figsize=(12, 7))
+panels = [
+    (axs[0, 0], u,   'jet',    'u (x方向速度)'),
+    (axs[0, 1], v,   'jet',    'v (y方向速度)'),
+    (axs[1, 0], k,   'plasma', 'k (乱流エネルギー)'),
+    (axs[1, 1], eps, 'plasma', r'$\varepsilon$ (散逸率)'),
+]
+for ax, arr, cmap, title in panels:
+    ax.set_title(title)
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    im = ax.imshow(arr, origin='lower', cmap=cmap, aspect='auto')
+    fig.colorbar(im, ax=ax, orientation='horizontal', pad=0.18, fraction=0.06)
 
 plt.tight_layout()
 fname = 'kelbm_output_overview.png'

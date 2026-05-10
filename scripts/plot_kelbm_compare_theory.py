@@ -43,25 +43,32 @@ Re_tau = u_tau * H_half / nu0
 
 fig, axes = plt.subplots(1, 2, figsize=(13, 6))
 
+LEGEND_KW = dict(
+    loc='upper center', bbox_to_anchor=(0.5, -0.12),
+    ncol=2, frameon=True, fontsize=12,
+    handlelength=3.0, handletextpad=0.8, columnspacing=1.5,
+    borderpad=0.6,
+)
+
 # (左) 速度プロファイル：LBM vs 層流予測
 ax = axes[0]
-ax.plot(u, y, lw=2, label='LBM ($k$-$\\varepsilon$ 有効)')
-ax.plot(u_lam, y, '--', lw=1.5, label='層流予測（パラボラ型）')
+ax.plot(u, y, lw=2.2, color='C0', label='LBM ($k$-$\\varepsilon$ 有効)')
+ax.plot(u_lam, y, '--', lw=2.0, color='C1', label='層流予測（パラボラ型）')
 ax.set_xlabel('u')
 ax.set_ylabel('y')
 ax.set_title(f'速度プロファイル（$Re_\\tau$≈{Re_tau:.0f}, $Re_{{max}}$≈{u.max()*NY/nu0:.0f}）')
 ax.grid(True)
-ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=2, frameon=True)
+ax.legend(**LEGEND_KW)
 
 # (右) 渦粘性プロファイル：ν_t / ν_0
 ax = axes[1]
-ax.plot(nut / nu0, y, lw=2, color='C2')
-ax.axvline(1.0, ls=':', color='k', lw=0.8, label='$\\nu_t = \\nu_0$')
+ax.plot(nut / nu0, y, lw=2.2, color='C2', label='LBM 渦粘性比 $\\nu_t/\\nu_0$')
+ax.axvline(1.0, ls='--', color='k', lw=1.5, label='参照線 $\\nu_t = \\nu_0$')
 ax.set_xlabel('$\\nu_t / \\nu_0$')
 ax.set_ylabel('y')
 ax.set_title(f'渦粘性プロファイル（壁: $\\nu_t/\\nu_0$={nut[0]/nu0:.2f}, 中心: {nut[len(nut)//2]/nu0:.2f}）')
 ax.grid(True)
-ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=1, frameon=True)
+ax.legend(**LEGEND_KW)
 
 plt.suptitle(f'チャンネル流れ k-$\\varepsilon$ 検証 (NX={NX}, NY={NY}, $\\tau$={TAU}, $\\nu_0$={nu0:.4f})')
 plt.tight_layout()
