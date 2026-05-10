@@ -14,7 +14,9 @@
 
 ![後方ステップ流線](../assets/sec4/backward_step_streamlines.png)
 
-灰色領域が固体ブロック（$x < 30$, $y < 30$）。ブロックの直後（右下）に閉じた流線で囲まれた**剥離渦**が形成され、緑の破線が**再付着点**（壁面で $u(x, 1) > 0$ になる最小 $x$）を示しています。
+灰色領域が固体ブロック（$x < 30$, $y < 30$）。ブロックの直後（右下）に閉じた流線で囲まれた**剥離渦**が形成され、緑の破線が**再付着点**を示しています。
+
+> **再付着点の検出ノート**: $u(x, 1) > 0$ になる最小 $x$ で判定しています。halfway bounce-back では壁が $y=-0.5$、第1流体セルが $y=0$ ですが、$y=0$ は壁影響を強く受けてノイジーなので**壁直近の第2セル $y=1$** をモニタするのが慣例です。$x_R$ の値は $y=0$ で計測した場合とほぼ同じです（数セル以内）。
 
 ### 時間発展
 
@@ -84,7 +86,10 @@ k_{\rm wall} = \frac{u_\tau^2}{\sqrt{C_\mu}},\qquad
 \varepsilon_{\rm wall} = \frac{u_\tau^3}{\kappa\,\Delta y}
 $$
 
-コーナーセルでは隣接 2 壁の推定値の大きい方を採用（cavity と同じ）。
+コーナーセルでは隣接 2 壁の推定値の大きい方を採用（`apply_wall_function` 内の `if (k_new[i] < k_wall)` で max を取る）。具体的には：
+
+- セル $(STEP\_LENGTH, 0)$: 下壁と下流面の両方が触れる → max
+- セル $(STEP\_LENGTH, STEP\_HEIGHT)$（ステップ前面コーナー）: 上面壁と下流面の両方の局所せん断を明示的に適用 → max
 
 ## 計算条件
 
@@ -132,6 +137,8 @@ python scripts/plot_backward_step_history.py
 
 - `step_snapshot_*.csv`, `step_keps_snapshot_*.csv`: 各時刻の `x,y,u,v,vorticity,psi,solid[,k,eps,nut]`
 - `step_history.csv`, `step_keps_history.csv`: 100 ステップごとの $u_{\max}$、再付着位置 $x_R$（k-ε 版は $k,\varepsilon,\nu_t$ 平均も）
+
+> **流線関数 $\psi$ の正規化ノート**: $\psi(x, 0) = 0$ から $u$ を上方積分して計算しています。流量 $Q = \int u\,dy \neq 0$ のため、上壁での値は $\psi(x, NY-1) = Q$（ゼロではない）になります。視覚化（流線パターン）には影響なく、コンタープロットは相対値で意味を持ちます。完全に「全壁で $\psi=0$」にするには、Poisson 方程式 $\nabla^2 \psi = -\omega$ を境界条件 $\psi=0$ で解く必要があり、本実装は採用していません。
 
 ## 注意（限界）
 

@@ -31,6 +31,7 @@
 #define KAPPA 0.41
 #define WALL_DY 0.5
 #define KEPS_DT 0.05
+#define U_TYPICAL 0.05               // representative speed for k, eps initial seed
 
 const int cx[NDIR] = {0,1,0,-1,0,1,-1,-1,1};
 const int cy[NDIR] = {0,0,1,0,-1,1,1,-1,-1};
@@ -67,7 +68,7 @@ void init_geometry() {
 
 void initialize() {
     init_geometry();
-    double k_seed = 0.005 * 0.05 * 0.05;     // typical u^2 scale
+    double k_seed = 0.005 * U_TYPICAL * U_TYPICAL;
     double nut_target = 0.05 * nu0;
     double eps_seed = Cmu * k_seed * k_seed / nut_target;
     for (int y = 0; y < NY; ++y) {
@@ -192,32 +193,38 @@ void update_kepsilon() {
         }
     }
 
-    // Wall functions
+    // Wall functions: do NOT reset k_new[i] to zero per-loop. The
+    // apply_wall_function helper takes the max of the existing value and
+    // the new local-shear estimate, so corner cells touched by two wall
+    // loops correctly take the dominant shear.
     // Top wall y=NY-1
     for (int x = 0; x < NX; ++x) {
-        int i = IDX(x, NY-1);
-        k_new[i] = 0; eps_new[i] = 0;
-        apply_wall_function(i, u[i]);
+        apply_wall_function(IDX(x, NY-1), u[IDX(x, NY-1)]);
     }
     // Bottom wall y=0 (only where fluid: x >= STEP_LENGTH)
     for (int x = STEP_LENGTH; x < NX; ++x) {
-        int i = IDX(x, 0);
-        k_new[i] = 0; eps_new[i] = 0;
-        apply_wall_function(i, u[i]);
+        apply_wall_function(IDX(x, 0), u[IDX(x, 0)]);
     }
     // Top of step: y = STEP_HEIGHT, 0 <= x < STEP_LENGTH
     for (int x = 0; x < STEP_LENGTH; ++x) {
         int i = IDX(x, STEP_HEIGHT);
-        if (solid[i]) continue;     // shouldn't happen but safe
-        k_new[i] = 0; eps_new[i] = 0;
-        apply_wall_function(i, u[i]);
+        if (!solid[i]) apply_wall_function(i, u[i]);
     }
     // Downstream face of step: x = STEP_LENGTH, 0 <= y < STEP_HEIGHT
     for (int y = 0; y < STEP_HEIGHT; ++y) {
         int i = IDX(STEP_LENGTH, y);
-        if (solid[i]) continue;
-        k_new[i] = 0; eps_new[i] = 0;
-        apply_wall_function(i, v[i]);
+        if (!solid[i]) apply_wall_function(i, v[i]);
+    }
+    // Step top-front corner (STEP_LENGTH, STEP_HEIGHT): touched by both the
+    // top-of-step wall (via u shear) and the downstream-face wall (via v
+    // shear). The top/downstream loops above exclude this cell by design;
+    // apply both contributions explicitly here.
+    {
+        int i = IDX(STEP_LENGTH, STEP_HEIGHT);
+        if (!solid[i]) {
+            apply_wall_function(i, u[i]);
+            apply_wall_function(i, v[i]);
+        }
     }
 
     // Apply non-negativity floor and commit
@@ -327,8 +334,13 @@ int main() {
     if (output_snapshot(NSTEPS) != 0) return 1;
     fclose(hist);
 
+    double umax_actual = 0;
+    for (int i = 0; i < NX*NY; ++i) {
+        if (!solid[i] && fabs(u[i]) > umax_actual) umax_actual = fabs(u[i]);
+    }
+    double Re_H = umax_actual * STEP_HEIGHT / nu0;
     printf("Done. Snapshots: step_keps_snapshot_*.csv, history: step_keps_history.csv\n");
-    printf("Parameters: NX=%d NY=%d STEP=%dx%d NSTEPS=%d TAU=%.3f F=%g nu0=%.5f\n",
-           NX, NY, STEP_LENGTH, STEP_HEIGHT, NSTEPS, TAU, FORCE_X, nu0);
+    printf("Parameters: NX=%d NY=%d STEP=%dx%d NSTEPS=%d TAU=%.3f F=%g nu0=%.5f u_max=%.4f Re_H=%.0f\n",
+           NX, NY, STEP_LENGTH, STEP_HEIGHT, NSTEPS, TAU, FORCE_X, nu0, umax_actual, Re_H);
     return 0;
 }

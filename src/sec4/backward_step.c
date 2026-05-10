@@ -218,9 +218,15 @@ int main() {
     if (output_snapshot(NSTEPS) != 0) return 1;
     fclose(hist);
 
-    double Re_H = 0.05 * STEP_HEIGHT / nu0;  // estimate based on typical u
+    // Re_H computed from the actually-observed u_max so it matches the
+    // headline number quoted in docs and the history CSV.
+    double umax_actual = 0;
+    for (int i = 0; i < NX*NY; ++i) {
+        if (!solid[i] && fabs(u[i]) > umax_actual) umax_actual = fabs(u[i]);
+    }
+    double Re_H = umax_actual * STEP_HEIGHT / nu0;
     printf("Done. Snapshots: step_snapshot_*.csv, history: step_history.csv\n");
-    printf("Parameters: NX=%d NY=%d STEP=%dx%d NSTEPS=%d TAU=%.3f F=%g nu0=%.5f Re_H~%.0f\n",
-           NX, NY, STEP_LENGTH, STEP_HEIGHT, NSTEPS, TAU, FORCE_X, nu0, Re_H);
+    printf("Parameters: NX=%d NY=%d STEP=%dx%d NSTEPS=%d TAU=%.3f F=%g nu0=%.5f u_max=%.4f Re_H=%.0f\n",
+           NX, NY, STEP_LENGTH, STEP_HEIGHT, NSTEPS, TAU, FORCE_X, nu0, umax_actual, Re_H);
     return 0;
 }
