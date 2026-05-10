@@ -62,19 +62,23 @@ last_omega = arrays[-1][1]
 vmax = float(np.percentile(np.abs(last_omega.compressed()), 99))
 
 n = len(arrays)
-fig, axs = plt.subplots(n, 1, figsize=(13, 2.5 * n))
+fig, axs = plt.subplots(n, 1, figsize=(13, 3.0 * n))
 axs = np.array(axs).reshape(-1)
 
 for ax, (step, omega) in zip(axs, arrays):
     im = ax.imshow(omega, origin='lower', cmap='RdBu_r',
                    vmin=-vmax, vmax=vmax, aspect='equal')
-    ax.set_title(f'step = {step}, $|\\omega|_\\max$ = {np.abs(omega).max():.3e}')
-    ax.set_xlabel('x'); ax.set_ylabel('y')
+    ax.set_title(f'step = {step}, $|\\omega|_\\max$ = {np.abs(omega).max():.3e}',
+                 pad=8, fontsize=11)
+    ax.set_xlabel('x', fontsize=10)
+    ax.set_ylabel('y', fontsize=10)
 
+# Adjust spacing so panel titles don't collide with the panel above's x-tick labels.
+fig.subplots_adjust(hspace=0.6, top=0.95, bottom=0.07)
 cbar = fig.colorbar(im, ax=axs.tolist(), orientation='horizontal',
-                    fraction=0.04, pad=0.07,
+                    fraction=0.03, pad=0.06,
                     label='vorticity $\\omega = \\partial_x v - \\partial_y u$')
-plt.suptitle(f'Kármán 渦列 渦度フィールド（{suptitle_label}）')
+fig.suptitle(f'Kármán 渦列 渦度フィールド（{suptitle_label}）', y=0.99, fontsize=12)
 
 plt.savefig(OUTPUT_DIR / out_fname, dpi=200, bbox_inches='tight')
 plt.savefig(PUBLISHED_ASSET_DIR / out_fname, dpi=200, bbox_inches='tight')
