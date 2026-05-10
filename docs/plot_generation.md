@@ -29,6 +29,10 @@ d:/work/LBMcode/.venv/Scripts/python.exe scripts/<script-name>.py
   - 用途: `fdlbm.c` の中心断面速度分布と解析解の比較図を作る
   - 主な出力: [docs/assets/sec2/fdlbm_profile.png](assets/sec2/fdlbm_profile.png)
 
+- [scripts/plot_fdmadv_courant_compare.py](../scripts/plot_fdmadv_courant_compare.py)
+  - 用途: `fdmadv.c` の 4 手法について `t = 10, 20, 30` における `f-x` プロファイルを Courant 数 `0.5` と `1.0` で比較する
+  - 主な出力: [docs/assets/sec2/fdmadv_courant_compare.png](assets/sec2/fdmadv_courant_compare.png)
+
 - [scripts/plot_lbmpoi_tau_compare.py](../scripts/plot_lbmpoi_tau_compare.py)
   - 用途: `tau` を変えたときの Poiseuille flow 速度分布比較図を作る
   - 主な出力: [docs/assets/sec2/lbmpoi_tau_compare.png](assets/sec2/lbmpoi_tau_compare.png)
