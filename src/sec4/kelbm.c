@@ -9,7 +9,7 @@
 #include <math.h>
 
 #define NX 200
-#define NY 100
+#define NY 60
 #define NDIR 9
 #define NSTEPS 30000
 #define TAU 0.55                    // BGK relaxation time (closer to 0.5 -> lower nu)
