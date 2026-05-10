@@ -23,6 +23,9 @@
 #define OMEGA (1.0/TAU)
 #define U0 0.04
 #define M_PI_F 3.14159265358979323846
+// k-eps integration time step. Larger than kelbm.c's 0.01 because Taylor-Green
+// fields are smooth and we use central differences for convection (not upwind).
+#define KEPS_DT 0.05
 
 const int cx[NDIR] = {0,1,0,-1,0,1,-1,-1,1};
 const int cy[NDIR] = {0,0,1,0,-1,1,1,-1,-1};
@@ -50,8 +53,8 @@ void initialize() {
     double kx = 2.0 * M_PI_F / (double)NX;
     double ky = 2.0 * M_PI_F / (double)NY;
     // Seed k, eps with values consistent with the initial mean-strain rate.
-    // S^2 ~ U0^2 (kx^2 + ky^2) at the strain peaks; pick k_0 ~ 0.01 U0^2,
-    // eps_0 ~ Cmu * k_0^2 / nu_0_target with nu_t/nu_0 around 0.1 initially.
+    // S^2 ~ U0^2 (kx^2 + ky^2) at the strain peaks; pick k_0 ~ 0.005 U0^2,
+    // eps_0 = Cmu * k_0^2 / nu_t_target with nu_t_target = 0.1 * nu_0.
     double k_seed = 0.005 * U0 * U0;
     double nut_target = 0.1 * nu0;
     double eps_seed = Cmu * k_seed * k_seed / nut_target;
@@ -115,7 +118,7 @@ void macroscopic() {
 
 void update_kepsilon() {
     // Periodic boundaries everywhere — no wall functions for Taylor-Green.
-    double dx = 1.0, dy = 1.0, dt = 0.05;
+    double dx = 1.0, dy = 1.0, dt = KEPS_DT;
     for (int y = 0; y < NY; ++y) {
         for (int x = 0; x < NX; ++x) {
             int i = IDX(x, y);

@@ -46,8 +46,6 @@ if len(snapshots) > 6:
     idx = np.linspace(0, len(snapshots) - 1, 6).astype(int)
     snapshots = [snapshots[i] for i in idx]
 
-# Determine common color range across all snapshots for the vorticity field
-all_vmax = 0.0
 arrays = []
 for path in snapshots:
     df = pd.read_csv(path)
@@ -57,9 +55,10 @@ for path in snapshots:
         index=range(NY), columns=range(NX)
     ).values
     arrays.append((step_of(path), omega))
-    all_vmax = max(all_vmax, float(np.abs(omega).max()))
 
-# Symmetric colormap (RdBu) from -vmax to +vmax based on first frame for stable colors
+# Anchor symmetric colormap (RdBu) on the first frame so visual decay across
+# panels is monotone — later frames have smaller |omega|_max but render in the
+# same color range.
 vmax_init = float(np.abs(arrays[0][1]).max())
 
 n = len(arrays)

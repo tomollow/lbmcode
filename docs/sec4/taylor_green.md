@@ -58,7 +58,7 @@ LBM 圧力は密度に変換し、初期 $\rho = 1 - \tfrac{3}{4} U_0^2 [\cos(2k
 
 ### LBM (D2Q9, BGK)
 
-[kelbm.c](kelbm.md) と同じ BGK 衝突を使用：
+[kelbm の説明](kelbm.md)と同じ BGK 衝突を使用：
 
 $$
 f_k(\mathbf{x}+\mathbf{c}_k, t+1) = f_k(\mathbf{x}, t) - \omega [f_k(\mathbf{x}, t) - f_k^{\mathrm{eq}}(\mathbf{x}, t)]
@@ -85,38 +85,38 @@ $$
 | 項目 | Pure LBM | k-ε 版 |
 |---|---|---|
 | 領域 | $128 \times 128$ | $128 \times 128$ |
-| 緩和パラメータ | $\tau = 1.0$ | $\tau$ は局所値（基準は1.0） |
+| 緩和パラメータ | $\tau = 1.0$（一定） | $\tau_{\mathrm{eff}} = 1/2 + 3(\nu_0+\nu_t)$（セル毎・時刻毎に変動、基準 $\tau=1.0$） |
 | 初期速度ピーク | $U_0 = 0.04$ | $U_0 = 0.04$ |
 | 分子動粘性 | $\nu_0 = (\tau-1/2)/3 = 1/6$ | 同上 |
-| 時間ステップ数 | NSTEPS = 3000 | NSTEPS = 3000 |
+| LBM 時間ステップ数 | NSTEPS = 3000 | NSTEPS = 3000 |
+| k-ε 積分時間刻み | – | `KEPS_DT = 0.05`（kelbm.c の 0.01 より大きい — 周期境界の滑らかな場で中心差分の対流項を使うため） |
 | 境界条件 | 全方向周期 | 全方向周期 |
 | 初期 $k, \varepsilon$ | – | $k_0 = 5\!\times\!10^{-3} U_0^2$, $\varepsilon_0$ は $\nu_t/\nu_0=0.1$ になるよう設定 |
 | スナップショット | step = 0, 268, 758, 1394, 2146, 3000 | 同上 |
 
 ## 実行方法
 
-ビルド：
+### ランナースクリプト（推奨）
+
+ビルド・両バリアント実行・プロット生成を一括：
 
 ```powershell
-scripts/build_one.cmd src/sec4/taylor_green.c
-scripts/build_one.cmd src/sec4/taylor_green_keps.c
+pwsh scripts/run_taylor_green.ps1
 ```
 
-実行（出力 CSV をディレクトリ別に作るため `Push-Location`/`Pop-Location` で移動）：
+主なフラグ：
+- `-PureOnly`: pure LBM 版だけ実行（k-ε 版をスキップ）
+- `-KepsOnly`: k-ε 版だけ実行
+- `-SkipPlot`: プロット生成をスキップ
 
-```powershell
-mkdir -Force outputs/sec4/taylor_green | Out-Null
-Push-Location outputs/sec4/taylor_green
-../../../build/bin/taylor_green.exe
-Pop-Location
+ランナーは内部で次を行います：
+1. `scripts/build_one.cmd src/sec4/taylor_green{,_keps}.c` をそれぞれビルド
+2. `outputs/sec4/taylor_green/` と `outputs/sec4/taylor_green_keps/` を作成し、各々で実行
+3. [plot_taylor_green_decay.py](../../scripts/plot_taylor_green_decay.py) と [plot_taylor_green_snapshots.py](../../scripts/plot_taylor_green_snapshots.py) `[pure|keps]` を呼んで PNG を `outputs/sec4/` と `docs/assets/sec4/` に保存
 
-mkdir -Force outputs/sec4/taylor_green_keps | Out-Null
-Push-Location outputs/sec4/taylor_green_keps
-../../../build/bin/taylor_green_keps.exe
-Pop-Location
-```
+### 個別実行
 
-プロット：
+CSV が既に存在する場合、プロットスクリプトだけ呼び出せます：
 
 ```powershell
 python scripts/plot_taylor_green_decay.py
