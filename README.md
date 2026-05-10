@@ -114,6 +114,12 @@ scripts\run_one.cmd src\sec2\fdlbm.c
 echo 1 | build\bin\fdmadv.exe
 ```
 
+Courant 数 `0.5` と `1.0` の比較図を再生成する場合は次を実行します。
+
+```powershell
+d:/work/LBMcode/.venv/Scripts/python.exe scripts/plot_fdmadv_courant_compare.py
+```
+
 ### sec3
 
 ```cmd

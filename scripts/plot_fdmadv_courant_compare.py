@@ -83,9 +83,14 @@ def lookup_profile(history: dict[float, np.ndarray], target_time: float) -> np.n
     raise ValueError(f"time={target_time} was not found in {sorted(history)}")
 
 
+def profile_x_coordinates(history: dict[float, np.ndarray]) -> np.ndarray:
+    first_profile = next(iter(history.values()))
+    return np.arange(len(first_profile), dtype=float)
+
+
 def main() -> None:
     executable = build_executable()
-    x = np.arange(50, dtype=float)
+    x: np.ndarray | None = None
 
     figure, axes = plt.subplots(2, 2, figsize=(12.0, 8.4), sharex=True)
 
@@ -96,6 +101,8 @@ def main() -> None:
         for case in COURANT_CASES:
             history_path = run_case(executable, scheme["flag"], case["dt"])
             history = read_history(history_path)
+            if x is None:
+                x = profile_x_coordinates(history)
 
             for target_time in TARGET_TIMES:
                 profile = lookup_profile(history, target_time)
