@@ -43,6 +43,10 @@ int main(int argc, char *argv[])
   if(argc >= 3){
     dt = atof(argv[2]);
   }
+  if(flag < 1 || flag > 4){
+    fprintf(stderr,"flag must be 1 (Upwind), 2 (FTCS), 3 (Lax-Wendroff), or 4 (Leap-Frog).\n");
+    return 1;
+  }
 
 // initial condition
   for(i = 0; i < nx; i++){
