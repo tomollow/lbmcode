@@ -1,28 +1,78 @@
-### 比較図サンプル
+# kelbm.c 説明ドキュメント
+
+## 概要
+
+[src/sec4/kelbm.c](../../src/sec4/kelbm.c) は、2次元格子ボルツマン法（LBM, D2Q9）に標準型 $k$-$\varepsilon$ 乱流モデルを組み合わせたチャンネル流れのテストケースです。x 方向は周期境界、y 方向は上下壁（halfway bounce-back）、x 方向の体積力（Guo forcing）で駆動し、第1流体セルへの高 Re 壁関数（Dirichlet）で k, ε を注入します。$Re_\tau \approx 47$（遷移域）に設定されており、層流予測との比較で $k$-$\varepsilon$ モデルの活性化を検証できます。
+
+## 検証結果サマリー
 
 ![速度プロファイルと渦粘性プロファイル](../assets/sec4/kelbm_compare_theory.png)
 
 左図：LBM計算（青）と層流 Poiseuille 予測（橙破線）の比較。$k$-$\varepsilon$ が活性化していれば、$\nu_t$ により実効粘性が増し、LBM プロファイルは層流予測より低く・平坦になります。
 
 右図：渦粘性 $\nu_t/\nu_0$ の y 方向分布。壁関数で $k_{\text{wall}} = u_\tau^2/\sqrt{C_\mu}$、$\varepsilon_{\text{wall}} = u_\tau^3/(\kappa\,\Delta y)$ を Dirichlet 注入し、バルク全域で $\nu_t/\nu_0 \approx 0.15$–$0.20$ の渦粘性が発達しています。
-## 検証方法（k-ε 活性化の比較）
 
-本コードは $k$-$\varepsilon$ モデルが活性化する遷移域（$Re_\tau \approx 47$）に設定されています。検証では数値解と**層流予測**（パラボラ型）を比較し、$\nu_t$ による減速を観測します。
+### 検証結果（k-ε 活性化の確認）
 
-### 比較プロットの作成
+| 量 | 値 | 備考 |
+|---|---|---|
+| $u_{\max}$ (LBM) | 0.139 | $k$-$\varepsilon$ 有効 |
+| $u_{\max}$ (層流予測) | 0.375 | $u_{\max} = F_x H^2/(8\nu_0)$ |
+| $u_{\max}$ 比 (LBM/層流) | **0.37** | $\nu_t$ による実効粘性増加で減速 |
+| $Re_\tau$ | 47 | 遷移域 |
+| $Re_{\max}$ ($u_{\max} H/\nu_0$) | 833 | |
+| $\nu_t/\nu_0$ (バルク中央) | 0.16 | 渦粘性が分子粘性の16% |
+| $\nu_t/\nu_0$ (壁関数値) | 0.19 | 壁関数注入で安定 |
+| $k$ レンジ | $9.5\times 10^{-5}$–$8.3\times 10^{-4}$ | バルク〜壁 |
+| $\varepsilon$ レンジ | $3.0\times 10^{-7}$–$1.9\times 10^{-5}$ | バルク〜壁 |
 
-付属スクリプト [scripts/plot_kelbm_compare_theory.py](../../scripts/plot_kelbm_compare_theory.py) を実行すると、左右2枚のサブプロットを描画します：
+層流予測（$u_{\max}$=0.375）は LBM の Mach 数安定限界を超えるため、もし $k$-$\varepsilon$ が無効なら計算は破綻するはずです。実際は $\nu_t$ による減速で安定に定常解に収束し、$u_{\max} \approx 0.139$ に落ち着いています。これは「$k$-$\varepsilon$ モデルが流れを物理的に正しく抑制している」ことの直接的な証拠です。
 
-- **左**: 速度 $u(y)$ のプロファイル
-  - LBM 計算値（実線）
-  - 層流 Poiseuille 予測 $u_{\mathrm{lam}}(y) = u_{\max}^{\mathrm{lam}} \left[1 - \left(\dfrac{y - y_c}{NY/2}\right)^2\right]$、$u_{\max}^{\mathrm{lam}} = F_x H^2 / (8\nu_0)$（破線）
-- **右**: 渦粘性比 $\nu_t/\nu_0 = C_\mu k^2/(\varepsilon \nu_0)$ の y 方向分布
+## シミュレーション結果（2次元分布）
 
-$k$-$\varepsilon$ が無効なら層流予測と一致するはずですが、本パラメータでは $u_{\max}^{\mathrm{lam}} = 0.375$ が LBM の Mach 安定限界（$|u| \lesssim 0.1$）を超えるため、$\nu_t$ による減速がなければ計算は破綻します。実際には $\nu_t \neq 0$ により $u_{\max} \approx 0.139$ で安定するため、この差自体が k-ε モデルの正常動作を示します。
+### コンター図
 
-#### 実行例
+速度 $u$ の2次元分布：
 
-ビルド・シミュレーション・プロット生成を一括で行うランナースクリプトを使うのが推奨です：
+![uの2次元分布コンター](../assets/sec4/kelbm_contour_u.png)
+
+$k$ の2次元分布：
+
+![kの2次元分布コンター](../assets/sec4/kelbm_contour_k.png)
+
+$\varepsilon$ の2次元分布：
+
+![εの2次元分布コンター](../assets/sec4/kelbm_contour_epsilon.png)
+
+#### コンター図で確認するポイント
+
+- $u$: 流れ方向に並進不変（x 方向に均一）、$y$ 方向にプロファイルを示す。層流予測のパラボラより**平坦化**していれば $\nu_t$ が効いている
+- $k$: 壁関数注入により壁近傍で最大、バルクではほぼ一定値に近づく
+- $\varepsilon$: 壁近傍で大きく、バルクでは小さい（壁で生成された乱流エネルギーが散逸する形）
+
+### 補助プロット
+
+#### 中心断面プロファイル
+
+中心断面 ($x = NX/2$) における $u$, $k$, $\varepsilon$ の y 方向分布：
+
+![中心断面プロファイル](../assets/sec4/kelbm_centerline.png)
+
+$u$ プロファイルは中央付近で平坦化（層流の純粋なパラボラから乖離）。$k$ は壁面で最大（壁関数注入）、$\varepsilon$ は壁から内部に向かって対数的に減衰します。
+
+#### 全変数オーバービュー
+
+$u$, $v$, $k$, $\varepsilon$ を 2×2 の格子で並べた診断用プロット：
+
+![オーバービュー](../assets/sec4/kelbm_output_overview.png)
+
+$v$ がほぼゼロ（数値誤差レベル）であることから、流れが完全に x 方向で発達していることを確認できます。
+
+## 検証の再現方法
+
+### ランナースクリプト（推奨）
+
+ビルド・シミュレーション・プロット生成を一括で実行：
 
 ```powershell
 pwsh scripts/run_kelbm.ps1
@@ -34,39 +84,25 @@ pwsh scripts/run_kelbm.ps1
 2. `outputs/sec4/kelbm/` 配下で `kelbm.exe` を実行し `kelbm_output.csv` を生成
 3. プロットスクリプト 4 本（[plot_kelbm_compare_theory.py](../../scripts/plot_kelbm_compare_theory.py)、[plot_kelbm_contour.py](../../scripts/plot_kelbm_contour.py)、[plot_kelbm_centerline.py](../../scripts/plot_kelbm_centerline.py)、[plot_kelbm_output.py](../../scripts/plot_kelbm_output.py)）を順次実行し、PNG を `outputs/sec4/` と `docs/assets/sec4/` に保存
 
-`-SkipPlot` を渡すとプロット生成をスキップ。プロット単体で再生成したい場合は個別に Python スクリプトを呼べます：
+`-SkipPlot` を渡すとプロット生成をスキップ。`pwsh` (PowerShell 7+) と Windows PowerShell 5.1 のどちらでも動作します。
+
+### 個別実行
+
+CSV 生成済みの場合、プロットスクリプトを単独で実行できます：
 
 ```powershell
 python scripts/plot_kelbm_compare_theory.py
+python scripts/plot_kelbm_contour.py
+python scripts/plot_kelbm_centerline.py
+python scripts/plot_kelbm_output.py
 ```
 
-#### 画像ファイル
+`kelbm.exe` を直接呼ぶ場合は、CSV を `outputs/sec4/kelbm/` 配下に置く必要があります（プロットスクリプトはこのパスから読み込むため）：
 
-`outputs/sec4/kelbm_compare_theory.png`（出力アーカイブ）と `docs/assets/sec4/kelbm_compare_theory.png`（ドキュメント参照用）の両方に同じ画像が保存されます。
-
----
-
-## シミュレーション結果の2次元分布コンター
-
-速度 $u$ の2次元分布：
-![uの2次元分布コンター](../assets/sec4/kelbm_contour_u.png)
-
-$k$ の2次元分布：
-![kの2次元分布コンター](../assets/sec4/kelbm_contour_k.png)
-
-$\varepsilon$ の2次元分布：
-![εの2次元分布コンター](../assets/sec4/kelbm_contour_epsilon.png)
-
-### コンター図で確認するポイント
-
-- $u$: 流れ方向に並進不変（x 方向に均一）、$y$ 方向にプロファイルを示す。層流予測のパラボラより**平坦化**していれば $\nu_t$ が効いている
-- $k$: 壁関数注入により壁近傍で最大、バルクではほぼ一定値に近づく
-- $\varepsilon$: 壁近傍で大きく、バルクでは小さい（壁で生成された乱流エネルギーが散逸する形）
-# kelbm.c 説明ドキュメント
-
-## 概要
-
-[src/sec4/kelbm.c](../../src/sec4/kelbm.c) は、2 次元格子ボルツマン法（LBM）に $k$-$\varepsilon$ 乱流モデルを組み合わせた、ポアズイユ型チャンネル流れのテストケースです。x 方向は周期境界、y 方向は上下壁（ハーフウェイ bounce-back）とし、x 方向に一定の体積力をかけて駆動します。速度場 $u,v$、乱流エネルギー $k$、散逸率 $\varepsilon$ を出力し、解析解（パラボラ型速度分布）との比較で実装の妥当性を検証できます。
+```powershell
+mkdir -Force outputs/sec4/kelbm | Out-Null
+Push-Location outputs/sec4/kelbm; ../../../build/bin/kelbm.exe; Pop-Location
+```
 
 ## 支配方程式
 
@@ -183,14 +219,6 @@ $$
 
 形式的には高 Re 壁関数は $y^+ = u_\tau \Delta y / \nu_0 \gtrsim 30$ で有効ですが、本ケースでは $y^+_1 \approx 0.5$ で範囲外です。実態としては「k-ε ソース項を壁付近で有限に保つための注入器」として作用しており、低 Re k-ε モデル（Launder-Sharma など）で置き換えるとより物理的に正確になります。
 
-## 変数と配列
-
-- `f[NX*NY*NDIR]`: 分布関数 $f_k$
-- `u[NX*NY], v[NX*NY]`: 速度場
-- `rho[NX*NY]`: 密度場
-- `k[NX*NY]`: 乱流エネルギー
-- `eps[NX*NY]`: 乱流散逸率
-
 ## 計算条件
 
 - 計算領域: $200 \times 100$ 格子（`NX = 200, NY = 100`、x方向：流れ方向、y方向：壁法線方向）
@@ -219,9 +247,24 @@ $$
 
 （遷移域、完全乱流の典型値 $Re_\tau \gtrsim 180$ には届かないが、$k$-$\varepsilon$ モデルの活性化は確認できる）
 
+## 変数と配列
+
+- `f_buf_a[NX*NY*NDIR]`, `f_buf_b[NX*NY*NDIR]`: 分布関数のダブルバッファ
+- `f`, `f2`: 各ステップで入れ替わるポインタ。`stream_collide` は push-streaming で `f` から読んで `f2` に書き、最後にポインタをスワップ（`memcpy` 不要で 2× 高速化）
+- `u[NX*NY], v[NX*NY]`: 速度場
+- `rho[NX*NY]`: 密度場
+- `k[NX*NY]`: 乱流エネルギー
+- `eps[NX*NY]`: 乱流散逸率
+- `k_new[NX*NY], eps_new[NX*NY]`: $k,\varepsilon$ の更新用一時バッファ
+
 ## 出力
 
-- `kelbm_output.csv` に $u,v,k,\varepsilon$ を全格子点で出力
+`kelbm.exe` は **実行時のカレントディレクトリ** に `kelbm_output.csv` を書き出します（`x,y,u,v,k,epsilon` の6列、`%.9g` 精度）。
+
+- `run_kelbm.ps1` 経由で実行した場合: `outputs/sec4/kelbm/kelbm_output.csv`
+- `kelbm.exe` を直接呼んだ場合: 呼び出し元の cwd
+
+プロットスクリプトは前者のパスを前提にしているため、直接実行する場合は `outputs/sec4/kelbm/` 配下から呼ぶか、CSV を移動する必要があります。
 
 ## 参考式
 
@@ -239,23 +282,7 @@ $$
 w_0 = \frac{4}{9},\quad w_{1\sim4} = \frac{1}{9},\quad w_{5\sim8} = \frac{1}{36}
 $$
 
-## 検証結果（k-ε 活性化の確認）
-
-| 量 | 値 | 備考 |
-|---|---|---|
-| $u_{\max}$ (LBM) | 0.139 | $k$-$\varepsilon$ 有効 |
-| $u_{\max}$ (層流予測) | 0.375 | $u_{\max} = F_x H^2/(8\nu_0)$ |
-| $u_{\max}$ 比 (LBM/層流) | **0.37** | $\nu_t$ による実効粘性増加で減速 |
-| $Re_\tau$ | 47 | 遷移域 |
-| $Re_{\max}$ ($u_{\max} H/\nu_0$) | 833 | |
-| $\nu_t/\nu_0$ (バルク中央) | 0.16 | 渦粘性が分子粘性の16% |
-| $\nu_t/\nu_0$ (壁関数値) | 0.19 | 壁関数注入で安定 |
-| $k$ レンジ | $9.5\times 10^{-5}$–$8.3\times 10^{-4}$ | バルク〜壁 |
-| $\varepsilon$ レンジ | $3.0\times 10^{-7}$–$1.9\times 10^{-5}$ | バルク〜壁 |
-
-層流予測（$u_{\max}$=0.375）は LBM の Mach 数安定限界を超えるため、もし $k$-$\varepsilon$ が無効なら計算は破綻するはずです。実際は $\nu_t$ による減速で安定に定常解に収束し、$u_{\max} \approx 0.139$ に落ち着いています。これは「$k$-$\varepsilon$ モデルが流れを物理的に正しく抑制している」ことの直接的な証拠です。
-
-## 注意
+## 注意（限界）
 
 - $Re_\tau \approx 47$ は**遷移域**であり、完全乱流（典型 $Re_\tau \gtrsim 180$）ではありません。本コードは $k$-$\varepsilon$ 実装の活性化検証としては有効ですが、対数則 $u^+ = (1/\kappa)\ln y^+ + B$ の再現や DNS 統計との比較には不適です。
 - 完全乱流レジームには $\tau \to 0.5$（$\nu_0 \to 0$）が必要ですが、BGK 衝突演算子は $\tau \approx 0.5$ で不安定化します。MRT/regularized 衝突や Smagorinsky 型 LES などへの変更が必要です。

@@ -209,8 +209,12 @@ void update_kepsilon() {
     }
 }
 
-void output_csv(const char* fname) {
+int output_csv(const char* fname) {
     FILE* fp = fopen(fname, "w");
+    if (!fp) {
+        fprintf(stderr, "output_csv: cannot open %s for writing\n", fname);
+        return 1;
+    }
     fprintf(fp, "x,y,u,v,k,epsilon\n");
     for(int y=0; y<NY; ++y) {
         for(int x=0; x<NX; ++x) {
@@ -219,6 +223,7 @@ void output_csv(const char* fname) {
         }
     }
     fclose(fp);
+    return 0;
 }
 
 int main() {
@@ -230,7 +235,9 @@ int main() {
         if(t%200==0) printf("step %d\n", t);
     }
     macroscopic();
-    output_csv("kelbm_output.csv");
+    if (output_csv("kelbm_output.csv") != 0) {
+        return 1;
+    }
     printf("Done. Output: kelbm_output.csv\n");
     return 0;
 }
