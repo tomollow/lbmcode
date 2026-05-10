@@ -182,33 +182,28 @@ void update_kepsilon() {
                             - Ce2*eps[i]*eps[i]/(k[i]+1e-12));
         }
     }
-    // Wall functions on the four wall layers (overwrite k_new, eps_new).
+    // Wall functions on the four wall layers. Do NOT reset k_new/eps_new
+    // per-loop — apply_wall_function already takes max(existing, estimate),
+    // so the four corner cells (each touched by two wall loops) properly
+    // pick up the dominant shear instead of the last loop's value.
     // Top wall (y=NY-1): tangential gradient uses U_LID - u(NY-1)
     for (int x = 0; x < NX; ++x) {
         int i = IDX(x, NY-1);
-        // Initialize for fresh top-wall calc
-        k_new[i] = 0; eps_new[i] = 0;
         apply_wall_function(i, U_LID - u[i]);
     }
     // Bottom wall (y=0): u_wall = 0
     for (int x = 0; x < NX; ++x) {
         int i = IDX(x, 0);
-        k_new[i] = 0; eps_new[i] = 0;
         apply_wall_function(i, u[i]);
     }
     // Left wall (x=0): v_wall = 0; tangential is v
     for (int y = 0; y < NY; ++y) {
         int i = IDX(0, y);
-        // Don't reset corners — top/bottom already wrote them
-        if (y == 0 || y == NY-1) continue;
-        k_new[i] = 0; eps_new[i] = 0;
         apply_wall_function(i, v[i]);
     }
     // Right wall (x=NX-1)
     for (int y = 0; y < NY; ++y) {
         int i = IDX(NX-1, y);
-        if (y == 0 || y == NY-1) continue;
-        k_new[i] = 0; eps_new[i] = 0;
         apply_wall_function(i, v[i]);
     }
     // Apply non-negativity floor and commit
