@@ -18,10 +18,12 @@
 // flag == 4 (Leap-Frog Scheme)
 
 #include<stdio.h>
+#include<stdlib.h>
 #define DIM 100
-int main()
+int main(int argc, char *argv[])
 {
   FILE *fp;
+  FILE *history_fp;
   int i, j, k, m, n, nx, flag;
   double time, dt, dx, c, e[DIM], en[DIM], eo[DIM];
   char a[50][50];
@@ -32,8 +34,15 @@ int main()
   time = 0.0; dx = 1.0; c = 1.0;
 
   flag = 1;
-  printf("flag?");
-  scanf("%d",&flag);
+  if(argc >= 2){
+    flag = atoi(argv[1]);
+  }else{
+    printf("flag?");
+    scanf("%d",&flag);
+  }
+  if(argc >= 3){
+    dt = atof(argv[2]);
+  }
 
 // initial condition
   for(i = 0; i < nx; i++){
@@ -48,6 +57,7 @@ int main()
   }
 
 //calculation
+  history_fp = fopen("fdmadv_history.dat","w");
   for(k = 0; k < 6; k++){
     for(m = 0; m < 10; m++){
       time =  time + dt;
@@ -79,6 +89,12 @@ int main()
 
     for(i = 0; i < nx; i++){
       n = (int)(e[i]*5.0);
+      if(n < 0){
+        n = 0;
+      }
+      if(n > 10){
+        n = 10;
+      }
       for(j = 0; j < 10; j++){
         a[i][j] = ' ';
       }
@@ -94,7 +110,15 @@ int main()
       printf("\n");
     }
     printf("------------------\n");
+
+    fprintf(history_fp,"%10.8e", time);
+    for(i = 0; i < nx; i++){
+      fprintf(history_fp," %10.8e", e[i]);
+    }
+    fprintf(history_fp,"\n");
   }
+
+  fclose(history_fp);
 
   fp = fopen("fdmadv","w");
   for(i = 0; i < nx; i++){
