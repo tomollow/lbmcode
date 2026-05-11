@@ -1,24 +1,29 @@
 param(
   [switch]$SkipPlot,
   [switch]$PureOnly,
-  [switch]$KepsOnly
+  [switch]$KepsOnly,
+  [switch]$LesOnly
 )
 
 $ErrorActionPreference = "Stop"
 
-if ($PureOnly -and $KepsOnly) {
-  throw "Cannot specify both -PureOnly and -KepsOnly"
+$onlyCount = @($PureOnly, $KepsOnly, $LesOnly | Where-Object { $_ }).Count
+if ($onlyCount -gt 1) {
+  throw "Specify at most one of -PureOnly / -KepsOnly / -LesOnly"
 }
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = Split-Path -Parent $scriptDir
 
 $variants = @()
-if (-not $KepsOnly) {
+if (-not $KepsOnly -and -not $LesOnly) {
   $variants += @{ Name = "cavity";      Source = "src/sec4/cavity.c";      Exe = "cavity.exe" }
 }
-if (-not $PureOnly) {
+if (-not $PureOnly -and -not $LesOnly) {
   $variants += @{ Name = "cavity_keps"; Source = "src/sec4/cavity_keps.c"; Exe = "cavity_keps.exe" }
+}
+if (-not $PureOnly -and -not $KepsOnly) {
+  $variants += @{ Name = "cavity_les";  Source = "src/sec4/cavity_les.c";  Exe = "cavity_les.exe" }
 }
 
 Push-Location $repoRoot
@@ -50,9 +55,15 @@ try {
     $venvPython = Join-Path $repoRoot ".venv/Scripts/python.exe"
     $python = if (Test-Path $venvPython) { $venvPython } else { "python" }
     Write-Host "Regenerating plots with $python"
-    if (-not $KepsOnly -and -not $PureOnly) {
+    if ($onlyCount -eq 0) {
       & $python (Join-Path $scriptDir "plot_cavity_streamlines.py")
       & $python (Join-Path $scriptDir "plot_cavity_centerline.py")
+    }
+    if (-not $PureOnly -and -not $LesOnly) {
+      & $python (Join-Path $scriptDir "plot_cavity_streamlines.py") "keps"
+    }
+    if (-not $PureOnly -and -not $KepsOnly) {
+      & $python (Join-Path $scriptDir "plot_cavity_streamlines.py") "les"
     }
   }
 }
