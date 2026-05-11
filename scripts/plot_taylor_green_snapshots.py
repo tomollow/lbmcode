@@ -1,6 +1,6 @@
 """Render vorticity snapshots from Taylor-Green CSV files as a 2x3 panel.
 
-Usage: python plot_taylor_green_snapshots.py [pure|keps]   (default: pure)
+Usage: python plot_taylor_green_snapshots.py [pure|keps|les]   (default: pure)
 """
 
 import sys
@@ -18,7 +18,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 PUBLISHED_ASSET_DIR.mkdir(parents=True, exist_ok=True)
 
 variant = sys.argv[1] if len(sys.argv) > 1 else 'pure'
-if variant not in ('pure', 'keps'):
+if variant not in ('pure', 'keps', 'les'):
     raise SystemExit(f'unknown variant: {variant}')
 
 if variant == 'pure':
@@ -26,11 +26,16 @@ if variant == 'pure':
     prefix = 'tg_snapshot_'
     suptitle_label = 'Pure LBM'
     out_fname = 'taylor_green_snapshots.png'
-else:
+elif variant == 'keps':
     src_dir = ROOT_DIR / 'outputs' / 'sec4' / 'taylor_green_keps'
     prefix = 'tg_keps_snapshot_'
     suptitle_label = 'LBM + $k$-$\\varepsilon$'
     out_fname = 'taylor_green_snapshots_keps.png'
+else:  # les
+    src_dir = ROOT_DIR / 'outputs' / 'sec4' / 'taylor_green_les'
+    prefix = 'tg_les_snapshot_'
+    suptitle_label = 'LBM + Smagorinsky LES'
+    out_fname = 'taylor_green_snapshots_les.png'
 
 snapshots = sorted(src_dir.glob(f'{prefix}*.csv'))
 if not snapshots:

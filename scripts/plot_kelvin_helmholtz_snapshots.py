@@ -1,6 +1,6 @@
 """Vorticity snapshots of the Kelvin-Helmholtz instability over time.
 
-Usage: python plot_kelvin_helmholtz_snapshots.py [pure|keps]   (default: pure)
+Usage: python plot_kelvin_helmholtz_snapshots.py [pure|keps|les]   (default: pure)
 """
 
 import sys
@@ -18,7 +18,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 PUBLISHED_ASSET_DIR.mkdir(parents=True, exist_ok=True)
 
 variant = sys.argv[1] if len(sys.argv) > 1 else 'pure'
-if variant not in ('pure', 'keps'):
+if variant not in ('pure', 'keps', 'les'):
     raise SystemExit(f'unknown variant: {variant}')
 
 if variant == 'pure':
@@ -26,11 +26,16 @@ if variant == 'pure':
     prefix = 'kh_snapshot_'
     suptitle_label = 'Pure LBM'
     out_fname = 'kelvin_helmholtz_snapshots.png'
-else:
+elif variant == 'keps':
     src_dir = ROOT_DIR / 'outputs' / 'sec4' / 'kelvin_helmholtz_keps'
     prefix = 'kh_keps_snapshot_'
     suptitle_label = 'LBM + $k$-$\\varepsilon$'
     out_fname = 'kelvin_helmholtz_snapshots_keps.png'
+else:  # les
+    src_dir = ROOT_DIR / 'outputs' / 'sec4' / 'kelvin_helmholtz_les'
+    prefix = 'kh_les_snapshot_'
+    suptitle_label = 'LBM + Smagorinsky LES'
+    out_fname = 'kelvin_helmholtz_snapshots_les.png'
 
 snapshots = sorted(src_dir.glob(f'{prefix}*.csv'))
 if not snapshots:
