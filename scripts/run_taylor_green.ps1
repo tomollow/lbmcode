@@ -1,20 +1,29 @@
 param(
   [switch]$SkipPlot,
   [switch]$PureOnly,
-  [switch]$KepsOnly
+  [switch]$KepsOnly,
+  [switch]$LesOnly
 )
 
 $ErrorActionPreference = "Stop"
+
+$onlyCount = @($PureOnly, $KepsOnly, $LesOnly | Where-Object { $_ }).Count
+if ($onlyCount -gt 1) {
+  throw "Specify at most one of -PureOnly / -KepsOnly / -LesOnly"
+}
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = Split-Path -Parent $scriptDir
 
 $variants = @()
-if (-not $KepsOnly) {
+if (-not $KepsOnly -and -not $LesOnly) {
   $variants += @{ Name = "taylor_green";      Source = "src/sec4/taylor_green.c";      Exe = "taylor_green.exe" }
 }
-if (-not $PureOnly) {
+if (-not $PureOnly -and -not $LesOnly) {
   $variants += @{ Name = "taylor_green_keps"; Source = "src/sec4/taylor_green_keps.c"; Exe = "taylor_green_keps.exe" }
+}
+if (-not $PureOnly -and -not $KepsOnly) {
+  $variants += @{ Name = "taylor_green_les";  Source = "src/sec4/taylor_green_les.c";  Exe = "taylor_green_les.exe" }
 }
 
 Push-Location $repoRoot
@@ -46,15 +55,18 @@ try {
     $venvPython = Join-Path $repoRoot ".venv/Scripts/python.exe"
     $python = if (Test-Path $venvPython) { $venvPython } else { "python" }
     Write-Host "Regenerating plots with $python"
-    if (-not $KepsOnly -and -not $PureOnly) {
-      # Decay plot needs both runs
+    if ($onlyCount -eq 0) {
+      # Decay plot needs all variants present
       & $python (Join-Path $scriptDir "plot_taylor_green_decay.py")
     }
-    if (-not $KepsOnly) {
+    if (-not $KepsOnly -and -not $LesOnly) {
       & $python (Join-Path $scriptDir "plot_taylor_green_snapshots.py") "pure"
     }
-    if (-not $PureOnly) {
+    if (-not $PureOnly -and -not $LesOnly) {
       & $python (Join-Path $scriptDir "plot_taylor_green_snapshots.py") "keps"
+    }
+    if (-not $PureOnly -and -not $KepsOnly) {
+      & $python (Join-Path $scriptDir "plot_taylor_green_snapshots.py") "les"
     }
   }
 }
