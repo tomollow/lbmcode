@@ -150,3 +150,18 @@ GitHub Actions では、`main` への push と pull request を契機に次を�
 
 - すべての C ファイルのビルド
 - `lbmtv.exe` の smoke test 実行
+
+## 更新履歴
+
+`main` ブランチに取り込まれた主な変更（新しい順）：
+
+- **2026-05-19** [#19](https://github.com/tomollow/lbmcode/pull/19): sec4 に Spalart-Allmaras DES97 のハイブリッド RANS/LES 実装を追加（cavity / karman / backward_step）。共通定数とクロージャ関数を [`src/sec4/sa_closure.h`](src/sec4/sa_closure.h) に集約。高 Re サニティ版 `karman_des_hires.c` と RANS/LES 領域マップ [`scripts/plot_des_region_map.py`](scripts/plot_des_region_map.py) も同梱。クロスケース比較 doc: [`docs/sec4/les_summary.md`](docs/sec4/les_summary.md), [`docs/sec4/keps_summary.md`](docs/sec4/keps_summary.md)
+- **2026-05-12** [#18](https://github.com/tomollow/lbmcode/pull/18): sec4 の 6 ケース（kelbm / taylor_green / kelvin_helmholtz / cavity / backward_step / karman）に Smagorinsky LES 版を追加し、pure / k-ε / LES の 3 variant 比較に再編。[`docs/sec4/les_summary.md`](docs/sec4/les_summary.md) でクロスケース比較を新設
+- **2026-05-11** [#17](https://github.com/tomollow/lbmcode/pull/17): 同 6 ケースを横断する k-ε モデルの体系的比較 [`docs/sec4/keps_summary.md`](docs/sec4/keps_summary.md) を追加
+- **2026-05-11** [#16](https://github.com/tomollow/lbmcode/pull/16): Karman 渦列ケース（pure LBM + k-ε）を追加（[`src/sec4/karman.c`](src/sec4/karman.c), [`src/sec4/karman_keps.c`](src/sec4/karman_keps.c)）
+- **2026-05-11** [#15](https://github.com/tomollow/lbmcode/pull/15): cavity のコーナーセル壁関数を修正（4 壁の `apply_wall_function` で `max` ロジック導入）
+- **2026-05-11** [#14](https://github.com/tomollow/lbmcode/pull/14): 後方ステップ流れケース（pure LBM + k-ε）を追加（[`src/sec4/backward_step.c`](src/sec4/backward_step.c), [`src/sec4/backward_step_keps.c`](src/sec4/backward_step_keps.c)）
+- **2026-05-10** [#13](https://github.com/tomollow/lbmcode/pull/13): 蓋駆動 cavity ケース（pure LBM + k-ε）を追加（[`src/sec4/cavity.c`](src/sec4/cavity.c), [`src/sec4/cavity_keps.c`](src/sec4/cavity_keps.c)）
+- **2026-05-10** [#12](https://github.com/tomollow/lbmcode/pull/12): Kelvin-Helmholtz 不安定ケース（pure LBM + k-ε）を追加
+- **2026-05-10** [#11](https://github.com/tomollow/lbmcode/pull/11): Taylor-Green 渦ケース（pure LBM + k-ε）を追加
+- **2026-05-10** [#10](https://github.com/tomollow/lbmcode/pull/10): チャンネル流の k-ε 乱流ケース [`src/sec4/kelbm.c`](src/sec4/kelbm.c) を追加
