@@ -30,6 +30,7 @@ VARIANTS = {
     'pure': dict(src='backward_step',      prefix='step_snapshot_',      label='Pure LBM'),
     'keps': dict(src='backward_step_keps', prefix='step_keps_snapshot_', label='LBM + $k$-$\\varepsilon$'),
     'les':  dict(src='backward_step_les',  prefix='step_les_snapshot_',  label='LBM + Smagorinsky LES'),
+    'des':  dict(src='backward_step_des',  prefix='step_des_snapshot_',  label='LBM + SA-DES'),
 }
 
 

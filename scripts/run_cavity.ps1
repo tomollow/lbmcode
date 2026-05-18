@@ -2,28 +2,32 @@ param(
   [switch]$SkipPlot,
   [switch]$PureOnly,
   [switch]$KepsOnly,
-  [switch]$LesOnly
+  [switch]$LesOnly,
+  [switch]$DesOnly
 )
 
 $ErrorActionPreference = "Stop"
 
-$onlyCount = @($PureOnly, $KepsOnly, $LesOnly | Where-Object { $_ }).Count
+$onlyCount = @($PureOnly, $KepsOnly, $LesOnly, $DesOnly | Where-Object { $_ }).Count
 if ($onlyCount -gt 1) {
-  throw "Specify at most one of -PureOnly / -KepsOnly / -LesOnly"
+  throw "Specify at most one of -PureOnly / -KepsOnly / -LesOnly / -DesOnly"
 }
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = Split-Path -Parent $scriptDir
 
 $variants = @()
-if (-not $KepsOnly -and -not $LesOnly) {
+if (-not $KepsOnly -and -not $LesOnly -and -not $DesOnly) {
   $variants += @{ Name = "cavity";      Source = "src/sec4/cavity.c";      Exe = "cavity.exe" }
 }
-if (-not $PureOnly -and -not $LesOnly) {
+if (-not $PureOnly -and -not $LesOnly -and -not $DesOnly) {
   $variants += @{ Name = "cavity_keps"; Source = "src/sec4/cavity_keps.c"; Exe = "cavity_keps.exe" }
 }
-if (-not $PureOnly -and -not $KepsOnly) {
+if (-not $PureOnly -and -not $KepsOnly -and -not $DesOnly) {
   $variants += @{ Name = "cavity_les";  Source = "src/sec4/cavity_les.c";  Exe = "cavity_les.exe" }
+}
+if (-not $PureOnly -and -not $KepsOnly -and -not $LesOnly) {
+  $variants += @{ Name = "cavity_des";  Source = "src/sec4/cavity_des.c";  Exe = "cavity_des.exe" }
 }
 
 Push-Location $repoRoot
@@ -59,11 +63,14 @@ try {
       & $python (Join-Path $scriptDir "plot_cavity_streamlines.py")
       & $python (Join-Path $scriptDir "plot_cavity_centerline.py")
     }
-    if (-not $PureOnly -and -not $LesOnly) {
+    if (-not $PureOnly -and -not $LesOnly -and -not $DesOnly) {
       & $python (Join-Path $scriptDir "plot_cavity_streamlines.py") "keps"
     }
-    if (-not $PureOnly -and -not $KepsOnly) {
+    if (-not $PureOnly -and -not $KepsOnly -and -not $DesOnly) {
       & $python (Join-Path $scriptDir "plot_cavity_streamlines.py") "les"
+    }
+    if (-not $PureOnly -and -not $KepsOnly -and -not $LesOnly) {
+      & $python (Join-Path $scriptDir "plot_cavity_streamlines.py") "des"
     }
   }
 }

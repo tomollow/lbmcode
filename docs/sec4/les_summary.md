@@ -120,6 +120,44 @@ Smagorinsky 単体の既知の限界：
 - **WALE モデル**: 壁近傍で自然に $\nu_t \to 0$
 - **動的 Smagorinsky**: $C_s$ をフィルタ比から決定（Germano et al. 1991）
 
+## 補足：DES 版（SA-DES97）— cavity / karman / backward_step
+
+[cavity_des.md](cavity_des.md) / [karman_des.md](karman_des.md) / [backward_step_des.md](backward_step_des.md) に Spalart-Allmaras DES97 のハイブリッド RANS/LES 実装を追加しました。length-scale switch $\tilde d = \min(d_{\rm wall}, C_{DES}\Delta)$ で壁近傍 RANS / バルク LES を切り替えます。3 ケースとも本実装の $Re$ レジームでは **LES よりさらに深く眠り、pure LBM と区別がつかない**結果になります：
+
+| ケース | $Re$ | LES branch fraction | $\nu_t/\nu_0$ (DES) | 主要量 pure 比 (LES → DES) |
+|---|---:|---:|---:|---:|
+| cavity | $\approx 384$ | 0.969 | $\sim 10^{-10}$ | $\psi_{\min}$: 1.002 → **1.000** |
+| karman | $\approx 127$ | 0.973 | $\sim 10^{-11}$ | 振幅: 0.863 → **1.000** |
+| backward_step | $\approx 56$ | 0.962 | $\sim 10^{-10}$ | $x_R/H$: 1.000 → **1.000** |
+
+DES が LES より深く眠る本質的な理由は $f_{v1} = \chi^3/(\chi^3 + c_{v1}^3)$（$c_{v1} = 7.1$）の cutoff です。SA は「乱流レベル $\chi = \tilde\nu/\nu_0$ が十分大きい」と判定された場合のみ $\nu_t$ を有意に出力するため、低 $Re$ レジームでは $\chi$ が小さく $\nu_t$ がほぼゼロまで沈み込みます。Smagorinsky の代数式 $\nu_t = (C_s\Delta)^2|S|$ には判定機構がないため、$|S|$ が非ゼロな限り $\nu_t$ も非ゼロのまま。
+
+特に karman のプローブ振幅で **LES が 14% 抑制するのに対し DES が 0% 抑制** という対比は、両モデルの設計思想の違いをきれいに可視化します。LES は瞬時応答型でせん断のあるところで必ず散逸を出す一方、DES は乱流量の輸送 + 判定で「層流レジームでは何もしない」と判断します。
+
+### length-scale switch の可視化
+
+[scripts/plot_des_region_map.py](../../scripts/plot_des_region_map.py) で 3 ケースの $d_{\rm wall}$ 場と RANS/LES マップを描画できます：
+
+![cavity DES region map](../assets/sec4/des_region_map_cavity.png)
+![karman DES region map](../assets/sec4/des_region_map_karman.png)
+![BFS DES region map](../assets/sec4/des_region_map_step.png)
+
+左列が壁距離（黄色 = 中央付近で大、紫 = 壁近傍で小）、右列が二値マップ（赤 = RANS、青 = LES）。全ケースで「壁面・障害物に沿う 1 セル幅の赤いリボン + 内部の青いバルク」という典型的 DES97 hybrid 幾何が確認できます。LES fraction は 96–97% で 3 ケースとも一致。
+
+### 高 Re での確認（karman_des_hires）
+
+「Re を上げれば SA が起きる」という仮説の検証として、karman を $\tau = 0.51$（$\nu_0 = 0.00333$、5 倍小さい）と $F_x = 1.2\times 10^{-6}$ で再実行（[src/sec4/karman_des_hires.c](../../src/sec4/karman_des_hires.c)）：
+
+| 量 | $Re_D = 127$（標準）| $Re_D = 456$（hires）|
+|---|---:|---:|
+| 平衡 $\chi = \tilde\nu/\nu_0$ | 0.018 | 0.047 |
+| $\nu_t/\nu_0$ | $\sim 7\times 10^{-10}$ | $\sim 2\times 10^{-8}$ |
+| 結論 | sleeping | **still sleeping** |
+
+予測通り、$\chi$ は 2–3 倍に増えるものの $f_{v1}\sim \chi^3$ で 30 倍程度 $\nu_t$ が上がるに留まり、まだ 7 桁分 "fully turbulent" 状態（$\chi \sim c_{v1} = 7$）から離れています。標準 SA-DES が 2D LBM で起動するには $Re_D \sim 10^4$ 以上（3D 効果込みの真の乱流域）が必要で、それは本シリーズの 2D 設定の射程外です。
+
+DES は本来「壁近傍 attached BL は RANS、剥離後 wake は LES」の高 $Re$ 流れ（$Re_D \sim 10^4$ 以上）向けで、本実装の $Re$ レンジでは本領を発揮しません。3 doc は「モデルが眠るべきレジームで正しく眠る」ことの methodological consistency check として位置付けます。length-scale switch の幾何（壁/障害物周りの thin RANS layer）は全ケースで機能を確認済み。
+
 ## 教育的ポジショニング
 
 LES シリーズの学習ゴール（k-ε シリーズと相補的）：

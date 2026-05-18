@@ -30,6 +30,7 @@ VARIANTS = {
     'pure': dict(src='cavity',      prefix='cavity_snapshot_',      label='Pure LBM'),
     'keps': dict(src='cavity_keps', prefix='cavity_keps_snapshot_', label='LBM + $k$-$\\varepsilon$'),
     'les':  dict(src='cavity_les',  prefix='cavity_les_snapshot_',  label='LBM + Smagorinsky LES'),
+    'des':  dict(src='cavity_des',  prefix='cavity_des_snapshot_',  label='LBM + SA-DES'),
 }
 
 

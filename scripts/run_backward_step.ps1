@@ -2,28 +2,32 @@ param(
   [switch]$SkipPlot,
   [switch]$PureOnly,
   [switch]$KepsOnly,
-  [switch]$LesOnly
+  [switch]$LesOnly,
+  [switch]$DesOnly
 )
 
 $ErrorActionPreference = "Stop"
 
-$onlyCount = @($PureOnly, $KepsOnly, $LesOnly | Where-Object { $_ }).Count
+$onlyCount = @($PureOnly, $KepsOnly, $LesOnly, $DesOnly | Where-Object { $_ }).Count
 if ($onlyCount -gt 1) {
-  throw "Specify at most one of -PureOnly / -KepsOnly / -LesOnly"
+  throw "Specify at most one of -PureOnly / -KepsOnly / -LesOnly / -DesOnly"
 }
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = Split-Path -Parent $scriptDir
 
 $variants = @()
-if (-not $KepsOnly -and -not $LesOnly) {
+if (-not $KepsOnly -and -not $LesOnly -and -not $DesOnly) {
   $variants += @{ Name = "backward_step";      Source = "src/sec4/backward_step.c";      Exe = "backward_step.exe" }
 }
-if (-not $PureOnly -and -not $LesOnly) {
+if (-not $PureOnly -and -not $LesOnly -and -not $DesOnly) {
   $variants += @{ Name = "backward_step_keps"; Source = "src/sec4/backward_step_keps.c"; Exe = "backward_step_keps.exe" }
 }
-if (-not $PureOnly -and -not $KepsOnly) {
+if (-not $PureOnly -and -not $KepsOnly -and -not $DesOnly) {
   $variants += @{ Name = "backward_step_les";  Source = "src/sec4/backward_step_les.c";  Exe = "backward_step_les.exe" }
+}
+if (-not $PureOnly -and -not $KepsOnly -and -not $LesOnly) {
+  $variants += @{ Name = "backward_step_des";  Source = "src/sec4/backward_step_des.c";  Exe = "backward_step_des.exe" }
 }
 
 Push-Location $repoRoot
@@ -55,11 +59,14 @@ try {
       & $python (Join-Path $scriptDir "plot_backward_step_streamlines.py")
       & $python (Join-Path $scriptDir "plot_backward_step_history.py")
     }
-    if (-not $PureOnly -and -not $LesOnly) {
+    if (-not $PureOnly -and -not $LesOnly -and -not $DesOnly) {
       & $python (Join-Path $scriptDir "plot_backward_step_streamlines.py") "keps"
     }
-    if (-not $PureOnly -and -not $KepsOnly) {
+    if (-not $PureOnly -and -not $KepsOnly -and -not $DesOnly) {
       & $python (Join-Path $scriptDir "plot_backward_step_streamlines.py") "les"
+    }
+    if (-not $PureOnly -and -not $KepsOnly -and -not $LesOnly) {
+      & $python (Join-Path $scriptDir "plot_backward_step_streamlines.py") "des"
     }
   }
 }
