@@ -87,6 +87,25 @@ Karman は同じ $\nu_t/\nu_0$ レベルでも極端に大きな抑制を見せ�
 - **BGK は $\tau \to 0.5$ で不安定化** — 高 Re 域には MRT/regularized 衝突演算子推奨
 - **2D 限定**: Karman は $Re > 200$ で 3D 不安定（Mode A/B）が現れるため上限。完全乱流チャンネルや実用 BFS は 3D LES が必要
 
+## 補足：DES 版（SA-DES97）— cavity / karman / backward_step
+
+[cavity_des.md](cavity_des.md) / [karman_des.md](karman_des.md) / [backward_step_des.md](backward_step_des.md) に Spalart-Allmaras DES97 のハイブリッド RANS/LES 実装も追加しました。k-ε との対比で注目すべき点：
+
+- **壁関数の有無**: k-ε は Dirichlet 壁関数で $k$, $\varepsilon$ を強制注入（[cavity_keps.c](../../src/sec4/cavity_keps.c) の `apply_wall_function`）。SA-DES は $\tilde\nu = 0$ Dirichlet を陽に課さず、destruction 項 $c_{w1}f_w(\tilde\nu/\tilde d)^2$ の $1/\tilde d^2$ 増大で自然抑制
+- **乱流レベル判定**: k-ε は $\nu_t = C_\mu k^2/\varepsilon$ で機械的に算出。SA は $\nu_t = \tilde\nu\,f_{v1}(\chi)$、$f_{v1}$ が $\chi < c_{v1}$ で急減 — 低乱流レジームで自動的に "off" 状態に入る
+
+両モデルの効果量を本実装の 3 ケースで比較：
+
+| ケース | $\nu_t/\nu_0$ (k-ε) | $\nu_t/\nu_0$ (DES) | 主要量 抑制 (k-ε → DES) |
+|---|---:|---:|---:|
+| cavity | $4\times 10^{-2}$ | $\sim 10^{-10}$ | $\psi_{\min}$: 1.1% → **0%** |
+| karman | $5\times 10^{-2}$ | $\sim 10^{-11}$ | 振幅: **83%** → **0%** |
+| backward_step | $3.4\times 10^{-2}$ | $\sim 10^{-10}$ | $x_R/H$: 3% → **0%** |
+
+特に karman で顕著で、k-ε が**周期渦放出を 83% smear** する一方 DES は**渦放出を完全保存**（pure LBM と振幅 6 桁一致）。これは「k-ε が時間平均流向け、SA が瞬時量に応答」という設計差ではなく、**$f_{v1}$ の cutoff が「層流レジーム」と判定して $\nu_t$ をゼロにする** SA 固有の挙動です。
+
+層流レジームで「モデルが眠るべきとき眠る」という観点では SA-DES > LES > k-ε の順に「正しく眠る」結果になります。k-ε の壁関数注入は本来高 $Re$ 域での平均流計算を想定した補正であり、低 $Re$ ケースではノイズ源として作用しているとも言える挙動です。RANS/LES マップの可視化は [scripts/plot_des_region_map.py](../../scripts/plot_des_region_map.py) で生成され、各ケースで壁・障害物に沿う thin RANS layer + bulk LES の典型 DES97 hybrid 幾何が確認できます。
+
 ## 教育的ポジショニング
 
 このシリーズは **LBM + RANS の入門教材**として設計されており、以下の学習ゴールに対応：
