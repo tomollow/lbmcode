@@ -65,18 +65,19 @@ def render_case(name, cfg):
     NX = df['x'].max() + 1
     NY = df['y'].max() + 1
     d_wall = to_grid(df, 'd_wall', NX, NY)
+    # Treat the cavity (no obstacle) as having an empty solid mask so the rest
+    # of the function can use a single code path.
     if cfg['has_solid']:
         solid = to_grid(df, 'solid', NX, NY).astype(bool)
-        d_wall_m = np.ma.array(d_wall, mask=solid)
     else:
-        solid = None
-        d_wall_m = d_wall
+        solid = np.zeros_like(d_wall, dtype=bool)
+    fluid = ~solid
+    d_wall_m = np.ma.array(d_wall, mask=solid)
 
     fig, axes = plt.subplots(1, 2, figsize=cfg['figsize'])
 
-    # Left: d_wall field (log-ish to highlight RANS layer)
-    vmax_d = float(np.percentile(d_wall_m.compressed() if hasattr(d_wall_m, 'compressed')
-                                  else d_wall_m, 99))
+    # Left: d_wall field (the RANS layer near walls shows as the darkest band)
+    vmax_d = float(np.percentile(d_wall_m.compressed(), 99))
     im_d = axes[0].imshow(d_wall_m, origin='lower', cmap='viridis',
                           vmin=0.5, vmax=max(vmax_d, 2.0))
     axes[0].set_title(f"{cfg['label']} — $d_\\text{{wall}}$ (LU)")
@@ -86,13 +87,11 @@ def render_case(name, cfg):
                  fraction=0.04, pad=0.02, label='$d_\\text{wall}$')
 
     # Right: RANS/LES map. RANS=1 where d_wall < SWITCH, LES=0 otherwise.
-    rans_mask = (d_wall < SWITCH).astype(float)
-    if solid is not None:
-        rans_mask = np.ma.array(rans_mask, mask=solid)
+    rans_mask = np.ma.array((d_wall < SWITCH).astype(float), mask=solid)
     cmap = mcolors.ListedColormap(['#3b6dd6', '#e85c5c'])
     im_r = axes[1].imshow(rans_mask, origin='lower', cmap=cmap, vmin=0, vmax=1)
-    n_fluid = (~solid).sum() if solid is not None else NX*NY
-    n_les = int(((d_wall >= SWITCH) & (~solid if solid is not None else np.ones_like(d_wall, dtype=bool))).sum())
+    n_fluid = int(fluid.sum())
+    n_les = int(((d_wall >= SWITCH) & fluid).sum())
     les_frac = n_les / n_fluid
     axes[1].set_title(f"RANS / LES branch (LES fraction = {les_frac:.3f})")
     axes[1].set_xlabel('x'); axes[1].set_ylabel('y')

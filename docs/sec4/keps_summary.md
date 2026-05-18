@@ -102,9 +102,12 @@ Karman は同じ $\nu_t/\nu_0$ レベルでも極端に大きな抑制を見せ�
 | karman | $5\times 10^{-2}$ | $\sim 10^{-11}$ | 振幅: **83%** → **0%** |
 | backward_step | $3.4\times 10^{-2}$ | $\sim 10^{-10}$ | $x_R/H$: 3% → **0%** |
 
-特に karman で顕著で、k-ε が**周期渦放出を 83% smear** する一方 DES は**渦放出を完全保存**（pure LBM と振幅 6 桁一致）。これは「k-ε が時間平均流向け、SA が瞬時量に応答」という設計差ではなく、**$f_{v1}$ の cutoff が「層流レジーム」と判定して $\nu_t$ をゼロにする** SA 固有の挙動です。
+特に karman で顕著で、k-ε が**周期渦放出を 83% smear** する一方 DES は**渦放出を完全保存**（pure LBM と振幅 6 桁一致）。両モデルの差は **2 つの独立したメカニズム**の合成です：
 
-層流レジームで「モデルが眠るべきとき眠る」という観点では SA-DES > LES > k-ε の順に「正しく眠る」結果になります。k-ε の壁関数注入は本来高 $Re$ 域での平均流計算を想定した補正であり、低 $Re$ ケースではノイズ源として作用しているとも言える挙動です。RANS/LES マップの可視化は [scripts/plot_des_region_map.py](../../scripts/plot_des_region_map.py) で生成され、各ケースで壁・障害物に沿う thin RANS layer + bulk LES の典型 DES97 hybrid 幾何が確認できます。
+1. **k-ε 側の壁関数 $k$ 注入**: `apply_wall_function` が壁面で $k_{\rm wall} = u_\tau^2/\sqrt{C_\mu}$ を強制注入し、$\nu_t = C_\mu k^2/\varepsilon$ を経由して wake にも $\nu_t/\nu_0 \sim 0.05$ を撒き出す。本来高 $Re$ 平均流向けの補正だが、本ケースの低 $Re_D$ では「注入される側」が層流のため過剰散逸の源になっている
+2. **DES 側の $f_{v1}$ cutoff**: SA は $\tilde\nu$ の輸送方程式は解くが、出力時に $\nu_t = \tilde\nu\,f_{v1}(\chi)$ のゲートを通す。低 $Re$ で $\chi \ll c_{v1} = 7.1$ なので $f_{v1} \to 0$ となり、$\tilde\nu$ が非ゼロでも $\nu_t$ はほぼゼロ — 「乱流ではない」と自動判定して撤退する
+
+層流レジームで「モデルが眠るべきとき眠る」という観点では SA-DES > LES > k-ε の順に「正しく眠る」結果になります。RANS/LES マップの可視化は [scripts/plot_des_region_map.py](../../scripts/plot_des_region_map.py) で生成され、各ケースで壁・障害物に沿う thin RANS layer + bulk LES の典型 DES97 hybrid 幾何が確認できます。
 
 ## 教育的ポジショニング
 

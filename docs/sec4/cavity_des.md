@@ -139,7 +139,7 @@ LES と DES の差は **モデル設計の違い**から来ます：
 - **DES97 の "grey area"**: 壁近傍の RANS 領域から LES 領域への遷移で $\nu_t$ が不連続的に変化するため、境界層がある程度発達した流れでは modeled stress depletion (MSD) を起こす。これは DDES (Delayed DES, Spalart 2006) や IDDES で改善されたが、本実装は元祖 DES97 で MSD は cavity の低 $Re$ では現れない
 - **格子依存**: $C_{DES}\Delta$ が「LES branch のフィルタ幅」になるため、$\Delta$ を変えると bulk の $\nu_t$ レベルも変わる。LBM の格子間隔 = 1 LU を採用しているため、$\Delta$ の選択は格子細分化と直結
 - **2D 限定**: 真の DES は 3D での乱流構造を解像する前提のため、2D での DES は方法論的検証目的に留まる
-- **層流レジームでの非作動**: 本ケースのように $\|S\|$ が小さい流れでは SA が眠り続けるため、DES の利点（壁モデル + LES 解像）は発現しない。DES が映えるのは [karman](karman.md) や [backward_step](backward_step.md) のような剥離渦を伴う高 $Re$ 流れ
+- **層流レジームでの非作動**: 本ケースのように $\|S\|$ が小さい流れでは SA が眠り続けるため、DES の利点（壁モデル + LES 解像）は発現しない。DES が本領を発揮するには $\chi = \tilde\nu/\nu_0$ が $c_{v1} = 7.1$ まで成長する必要があり、それには $Re \sim 10^4$ 程度かつ 3D 乱流構造が前提となる。本シリーズの 2D LBM で扱う他ケース（[karman](karman.md), [backward_step](backward_step.md)）も同じレジームに属するため、[karman_des.md](karman_des.md) / [backward_step_des.md](backward_step_des.md) でも DES は同様に眠ります
 
 ## 参考
 
