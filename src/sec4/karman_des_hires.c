@@ -1,29 +1,21 @@
-﻿// karman_des_hires.c
-// 2D Karman vortex street + Spalart-Allmaras DES97 (D2Q9, BGK)
+// karman_des_hires.c
+// Higher-Re variant of karman_des.c (TAU = 0.51 -> nu_0 ~ 0.00333, ~5x
+// smaller; F_x = 1.2e-6 -> u_max ~ 0.08 -> Re_D ~ 456). Same SA-DES97
+// setup, same geometry. Purpose: empirically verify that bumping Re_D by
+// 3-4x is not enough to wake the SA closure in a 2D LBM laminar wake.
 //
-// Same geometry, body force, and asymmetric initial v perturbation as
-// karman.c / karman_les.c. SA-DES hybrid: 1-equation transport for nu_tilde
-// with length-scale switch
+// Expected outcome (and confirmed in practice): chi = nu_tilde / nu0 rises
+// from ~0.018 (Re_D = 127) to ~0.047, but f_v1 ~ chi^3 keeps the eddy
+// viscosity nu_t / nu_0 at ~ 1e-8. The model still sleeps.
 //
-//     d_tilde = min(d_wall, C_DES * Delta),   C_DES = 0.65, Delta = 1 LU
-//
-// Wall distance combines the top/bottom channel walls (halfway BB) and the
-// staircase cylinder, treated as an idealized circle of radius R_CYL:
-//
-//     d_wall = min( y+0.5, NY-y-0.5, sqrt((x-CX)^2+(y-CY)^2) - R_CYL )
-//
-// The first off-wall layer (one cell away from any wall or cylinder surface)
-// has d_wall < C_DES*Delta and runs in SA-RANS mode; the rest of the fluid
-// (~99%) runs in the LES branch. At Re_D ~ 130 the wake shedding is laminar
-// and |S| in the wake shear layer is moderate, so SA production cannot
-// overcome destruction 窶・the model decays toward chi << c_v1 and nu_t goes
-// to essentially zero, exactly as in cavity_des. The educational value is in
-// watching the length-scale switch operate and confirming SA-DES "correctly
-// sleeps" in a 2D laminar shedding regime.
+// See karman_des.md for the cross-Re comparison and the analytical reason
+// why standard SA needs chi ~ c_v1 = 7.1 to activate, which 2D LBM at
+// Re_D < ~1000 cannot supply.
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "sa_closure.h"
 
 #define NX 360
 #define NY 80
@@ -40,15 +32,6 @@
 #define PROBE_X 200
 #define PROBE_Y 50
 
-// Spalart-Allmaras constants
-#define KAPPA 0.41
-#define C_B1  0.1355
-#define C_B2  0.622
-#define SIG_SA (2.0/3.0)
-#define C_V1  7.1
-#define C_W1  (C_B1/(KAPPA*KAPPA) + (1.0 + C_B2)/SIG_SA)
-#define C_W2  0.3
-#define C_W3  2.0
 // DES97 length-scale switch
 #define C_DES 0.65
 #define DELTA_LES 1.0
@@ -92,7 +75,10 @@ void init_wall_distance() {
             double dbot = y + 0.5;
             double dx_ = x - CX, dy_ = y - CY;
             double dcyl = sqrt(dx_*dx_ + dy_*dy_) - (double)R_CYL;
-            if (dcyl < 0.5) dcyl = 0.5;  // floor at the first off-wall layer
+            // Required floor: corner fluid cells of the staircase can have
+            // sqrt(dx^2+dy^2) - R_CYL < 0.5 (even negative); without the floor
+            // d_tilde -> 0 and the SA destruction blows up.
+            if (dcyl < 0.5) dcyl = 0.5;
             double d = dtop < dbot ? dtop : dbot;
             if (dcyl < d) d = dcyl;
             d_wall[i] = d;
@@ -105,9 +91,7 @@ void initialize() {
     init_geometry();
     init_wall_distance();
     double nut_seed = 3.0 * nu0;
-    double chi_seed = nut_seed / nu0;
-    double chi3_seed = chi_seed * chi_seed * chi_seed;
-    double fv1_seed = chi3_seed / (chi3_seed + C_V1*C_V1*C_V1);
+    double fv1_seed = sa_fv1(nut_seed / nu0);
     for (int y = 0; y < NY; ++y) {
         for (int x = 0; x < NX; ++x) {
             int i = IDX(x, y);
@@ -185,14 +169,12 @@ void update_sa_des() {
         for (int x = 0; x < NX; ++x) {
             int i = IDX(x, y);
             if (solid[i]) { nut_field[i] = 0.0; continue; }
-            // Periodic x, mirror at top/bottom walls and at solid neighbors
             int ixp = IDX((x+1)%NX, y);
             int ixm = IDX((x-1+NX)%NX, y);
             if (solid[ixp]) ixp = i;
             if (solid[ixm]) ixm = i;
             int iyp = (y+1 < NY && !solid[IDX(x, y+1)]) ? IDX(x, y+1) : i;
             int iym = (y-1 >= 0 && !solid[IDX(x, y-1)]) ? IDX(x, y-1) : i;
-            // Velocity gradients
             double dudx = 0.5 * (u[ixp] - u[ixm]) / dx;
             double dvdx = 0.5 * (v[ixp] - v[ixm]) / dx;
             double dudy = 0.5 * (u[iyp] - u[iym]) / dy;
@@ -201,26 +183,13 @@ void update_sa_des() {
             double S2 = 2.0*(S11*S11 + S22*S22) + 4.0*S12*S12;
             double Smag = sqrt(S2);
 
-            // SA closure
+            // SA closure (Stilde, fw) — see sa_closure.h
             double nt = nu_tilde[i];
-            double chi = nt / nu0;
-            double chi3 = chi*chi*chi;
-            double fv1 = chi3 / (chi3 + C_V1*C_V1*C_V1);
-            double fv2 = 1.0 - chi / (1.0 + chi*fv1);
             double dl = d_tilde[i];
-            double inv_kdt2 = 1.0 / (KAPPA*KAPPA * dl*dl);
-            double Stilde = Smag + nt * fv2 * inv_kdt2;
-            if (Stilde < 1e-12) Stilde = 1e-12;
-            double r = nt * inv_kdt2 / Stilde;
-            if (r > 10.0) r = 10.0;
-            double r6 = r*r*r*r*r*r;
-            double g = r + C_W2*(r6 - r);
-            double g6 = g*g*g*g*g*g;
-            double cw36 = C_W3*C_W3*C_W3*C_W3*C_W3*C_W3;
-            double fw = g * pow((1.0 + cw36) / (g6 + cw36), 1.0/6.0);
+            sa_terms_t sa = sa_compute_terms(nt, nu0, dl, Smag);
 
-            double prod = C_B1 * Stilde * nt;
-            double dest = C_W1 * fw * (nt/dl) * (nt/dl);
+            double prod = C_B1 * sa.Stilde * nt;
+            double dest = C_W1 * sa.fw * (nt/dl) * (nt/dl);
             double lap = (nu_tilde[ixp] + nu_tilde[ixm] + nu_tilde[iyp] + nu_tilde[iym]
                           - 4.0*nt) / (dx*dx);
             double dntdx = 0.5 * (nu_tilde[ixp] - nu_tilde[ixm]) / dx;
@@ -239,10 +208,7 @@ void update_sa_des() {
         if (solid[i]) continue;
         if (nu_tilde_new[i] < 1e-12) nu_tilde_new[i] = 1e-12;
         nu_tilde[i] = nu_tilde_new[i];
-        double chi = nu_tilde[i] / nu0;
-        double chi3 = chi*chi*chi;
-        double fv1 = chi3 / (chi3 + C_V1*C_V1*C_V1);
-        nut_field[i] = nu_tilde[i] * fv1;
+        nut_field[i] = nu_tilde[i] * sa_fv1(nu_tilde[i] / nu0);
     }
 }
 
@@ -299,7 +265,6 @@ int main() {
     }
     fprintf(hist, "step,u_max,u_probe,v_probe,nut_mean,nu_tilde_mean,les_frac\n");
 
-    // LES-branch fraction over fluid cells
     int n_fluid = 0, n_les = 0;
     for (int i = 0; i < NX*NY; ++i) {
         if (solid[i]) continue;

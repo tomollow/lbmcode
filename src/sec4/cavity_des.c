@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "sa_closure.h"
 
 #define NX 128
 #define NY 128
@@ -31,15 +32,6 @@
 #define OMEGA (1.0/TAU)
 #define U_LID 0.05
 
-// Spalart-Allmaras constants
-#define KAPPA 0.41
-#define C_B1  0.1355
-#define C_B2  0.622
-#define SIG_SA (2.0/3.0)
-#define C_V1  7.1
-#define C_W1  (C_B1/(KAPPA*KAPPA) + (1.0 + C_B2)/SIG_SA)
-#define C_W2  0.3
-#define C_W3  2.0
 // DES97 length-scale switch
 #define C_DES 0.65
 #define DELTA_LES 1.0
@@ -70,9 +62,7 @@ void initialize() {
     // equilibrium over the run; seeding above the equilibrium lets us watch
     // the model "go to sleep" rather than starting flat-lined.
     double nut_seed = 3.0 * nu0;
-    double chi_seed = nut_seed / nu0;
-    double chi3_seed = chi_seed * chi_seed * chi_seed;
-    double fv1_seed = chi3_seed / (chi3_seed + C_V1*C_V1*C_V1);
+    double fv1_seed = sa_fv1(nut_seed / nu0);
 
     for (int y = 0; y < NY; ++y) {
         for (int x = 0; x < NX; ++x) {
@@ -172,27 +162,14 @@ void update_sa_des() {
             double S2 = 2.0*(S11*S11 + S22*S22) + 4.0*S12*S12;
             double Smag = sqrt(S2);
 
-            // SA closure functions
+            // SA closure (Stilde, fw) — see sa_closure.h
             double nt = nu_tilde[i];
-            double chi = nt / nu0;
-            double chi3 = chi*chi*chi;
-            double fv1 = chi3 / (chi3 + C_V1*C_V1*C_V1);
-            double fv2 = 1.0 - chi / (1.0 + chi*fv1);
             double dl = d_tilde[i];
-            double inv_kdt2 = 1.0 / (KAPPA*KAPPA * dl*dl);
-            double Stilde = Smag + nt * fv2 * inv_kdt2;
-            if (Stilde < 1e-12) Stilde = 1e-12;
-            double r = nt * inv_kdt2 / Stilde;
-            if (r > 10.0) r = 10.0;
-            double r6 = r*r*r*r*r*r;
-            double g = r + C_W2*(r6 - r);
-            double g6 = g*g*g*g*g*g;
-            double cw36 = C_W3*C_W3*C_W3*C_W3*C_W3*C_W3;
-            double fw = g * pow((1.0 + cw36) / (g6 + cw36), 1.0/6.0);
+            sa_terms_t sa = sa_compute_terms(nt, nu0, dl, Smag);
 
             // Source: production - destruction + diffusion + cross-diffusion
-            double prod = C_B1 * Stilde * nt;
-            double dest = C_W1 * fw * (nt/dl) * (nt/dl);
+            double prod = C_B1 * sa.Stilde * nt;
+            double dest = C_W1 * sa.fw * (nt/dl) * (nt/dl);
             double lap = (nu_tilde[ixp] + nu_tilde[ixm] + nu_tilde[iyp] + nu_tilde[iym]
                           - 4.0*nt) / (dx*dx);
             double dntdx = 0.5 * (nu_tilde[ixp] - nu_tilde[ixm]) / dx;
@@ -208,14 +185,11 @@ void update_sa_des() {
             nu_tilde_new[i] = nt + dt * (prod - dest + diff - conv_x - conv_y);
         }
     }
-    // Floor and recompute nut = nu_tilde * fv1
+    // Floor and recompute nut = nu_tilde * fv1(chi)
     for (int i = 0; i < NX*NY; ++i) {
         if (nu_tilde_new[i] < 1e-12) nu_tilde_new[i] = 1e-12;
         nu_tilde[i] = nu_tilde_new[i];
-        double chi = nu_tilde[i] / nu0;
-        double chi3 = chi*chi*chi;
-        double fv1 = chi3 / (chi3 + C_V1*C_V1*C_V1);
-        nut_field[i] = nu_tilde[i] * fv1;
+        nut_field[i] = nu_tilde[i] * sa_fv1(nu_tilde[i] / nu0);
     }
 }
 
