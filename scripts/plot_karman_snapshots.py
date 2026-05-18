@@ -19,7 +19,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 PUBLISHED_ASSET_DIR.mkdir(parents=True, exist_ok=True)
 
 variant = sys.argv[1] if len(sys.argv) > 1 else 'pure'
-if variant not in ('pure', 'keps', 'les'):
+if variant not in ('pure', 'keps', 'les', 'des'):
     raise SystemExit(f'unknown variant: {variant}')
 
 if variant == 'pure':
@@ -32,11 +32,16 @@ elif variant == 'keps':
     prefix = 'karman_keps_snapshot_'
     suptitle_label = 'LBM + $k$-$\\varepsilon$'
     out_fname = 'karman_snapshots_keps.png'
-else:  # les
+elif variant == 'les':
     src_dir = ROOT_DIR / 'outputs' / 'sec4' / 'karman_les'
     prefix = 'karman_les_snapshot_'
     suptitle_label = 'LBM + Smagorinsky LES'
     out_fname = 'karman_snapshots_les.png'
+else:  # des
+    src_dir = ROOT_DIR / 'outputs' / 'sec4' / 'karman_des'
+    prefix = 'karman_des_snapshot_'
+    suptitle_label = 'LBM + SA-DES'
+    out_fname = 'karman_snapshots_des.png'
 
 snapshots = sorted(src_dir.glob(f'{prefix}*.csv'),
                    key=lambda p: int(p.stem.replace(prefix, '')))
