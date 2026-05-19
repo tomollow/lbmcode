@@ -1,11 +1,15 @@
 """Plot u, v, stream function distributions for src/sec4/lbmcm.c.
 
-Reads the three output files (dataCMu, dataCMv, dataCMs) produced by lbmcm.c
-from outputs/sec4/lbmcm/ and produces:
+Reads the three output files (dataCMu, dataCMv, dataCMs) produced by the
+CM @ Re=5000 run and produces:
 
 - A 2x2 figure with: u/U_lid heatmap, v/U_lid heatmap, stream-function contours,
   and centerline profiles (u(L/2, y) and v(x, L/2)).
 - Saved to docs/assets/sec4/lbmcm_distribution.png and the run directory.
+
+The run directory is outputs/sec4/lbmcm/cm_re5000/ when populated by
+scripts/run_lbmcm_compare.ps1; otherwise outputs/sec4/lbmcm/ is used as
+a fallback (single-run layout).
 """
 
 from __future__ import annotations
@@ -17,7 +21,12 @@ import numpy as np
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
-RUN_DIR = ROOT_DIR / "outputs" / "sec4" / "lbmcm"
+RUN_BASE = ROOT_DIR / "outputs" / "sec4" / "lbmcm"
+RUN_DIR = (
+    RUN_BASE / "cm_re5000"
+    if (RUN_BASE / "cm_re5000" / "dataCMu").exists()
+    else RUN_BASE
+)
 PUBLISHED_ASSET_DIR = ROOT_DIR / "docs" / "assets" / "sec4"
 
 

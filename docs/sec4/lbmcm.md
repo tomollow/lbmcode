@@ -329,7 +329,21 @@ $\mathbf{u}_{\rm wall} = (U_{\rm lid}, 0)$、$U_{\rm lid} = 0.1$ ([lbmcm.c:52](.
 
 ### 隅（コーナー）の処理
 
-四隅の対角方向 $f_5, f_6, f_7, f_8$ には、$U_{\rm lid}$ を引数とする平衡分布関数を直接代入してリセット ([lbmcm.c:511-524](../../src/sec4/lbmcm.c#L511-L524))。
+四隅の対角方向 $f_5, f_6, f_7, f_8$ は対角伝播が壁内へ抜けないようリセットします ([lbmcm.c:511-524](../../src/sec4/lbmcm.c#L511-L524))。**上端 2 隅と下端 2 隅で扱いが異なります**：
+
+- **上端 2 隅 $(1, n_y-1), (n_x-1, n_y-1)$**: $\mathbf{u}_{\rm wall} = (U_{\rm lid}, 0)$ で評価した平衡分布
+
+$$
+f_k^{\rm corner} = \frac{1}{36}\left[\, 1 + 3\,c_{kx}\,U_{\rm lid} + \tfrac{9}{2}\,(c_{kx}\,U_{\rm lid})^2 - \tfrac{3}{2}\,U_{\rm lid}^2 \right] \quad (k = 5, 6, 7, 8)
+$$
+
+- **下端 2 隅 $(1, 1), (n_x-1, 1)$**: 静止流体の平衡（つまり $w_k = 1/36$ そのもの）
+
+$$
+f_k^{\rm corner} = \frac{1}{36} \quad (k = 5, 6, 7, 8)
+$$
+
+これは底壁が固定壁であることを反映した実装で、上端動壁の駆動を下端の隅で誤って伝えないための処置です。
 
 ## マクロ量の評価
 
@@ -377,6 +391,8 @@ $$
 
 ## 実行とプロット
 
+### 単一ケース実行
+
 ビルドは `scripts/build_one.cmd` または通常の `gcc` で：
 
 ```powershell
@@ -384,7 +400,7 @@ gcc -O2 src/sec4/lbmcm.c -o lbmcm.exe
 ./lbmcm.exe
 ```
 
-実行すると `dataCMu`, `dataCMv`, `dataCMs` の 3 ファイルが出力されます（ファイル名は CM 版に合わせて固定。SRT/MRT を試す場合は適宜リネームを推奨）：
+実行すると `dataCMu`, `dataCMv`, `dataCMs` の 3 ファイルが CWD に出力されます（ファイル名は CM 版に合わせて固定）：
 
 - `dataCMu` — $u / U_{\rm lid}$ の 2 次元配列
 - `dataCMv` — $v / U_{\rm lid}$ の 2 次元配列
@@ -392,11 +408,33 @@ gcc -O2 src/sec4/lbmcm.c -o lbmcm.exe
 
 標準出力には収束時刻、$\|\Delta \mathbf{u}\|_\infty$、$\psi$ の最大・最小値、流線関数を 0–9 の ASCII でレベル分けしたマップが表示されます。
 
+### SRT / MRT / CM 比較の再現（推奨）
+
+本ドキュメントの分布図・比較図を再現するためのヘルパー [scripts/run_lbmcm_compare.ps1](../../scripts/run_lbmcm_compare.ps1) が用意されています：
+
+```powershell
+pwsh scripts/run_lbmcm_compare.ps1
+```
+
+スクリプトは以下を順に実行します：
+
+1. `src/sec4/lbmcm.c` を一時的に書き換え、`flag` と `re` を 6 通りに切り替えてビルド（SRT/MRT/CM × Re=100、MRT/CM × Re=1000、CM × Re=5000）
+2. 各ケースを `outputs/sec4/lbmcm/{srt_re100,mrt_re100,cm_re100,mrt_re1000,cm_re1000,cm_re5000}/` で実行
+3. 終了時に `lbmcm.c` を元の内容（`flag=3, re=5000`）に復元
+4. [plot_lbmcm_distribution.py](../../scripts/plot_lbmcm_distribution.py) と [plot_lbmcm_compare.py](../../scripts/plot_lbmcm_compare.py) を呼び出して図を再生成
+
+オプション：
+
+- `-SkipRuns` — シミュレーションをスキップしてプロットだけ再生成
+- `-SkipPlot` — シミュレーションのみ実行（プロットしない）
+
+ビルド失敗時や中断時にもソースが復元されるよう `try/finally` で保護されています。
+
 ## 設計判断と注意
 
 - **3 つの衝突演算子は同じ平衡分布を共有**：性能差は緩和構造のみに由来し、フェアな比較ができる
 - **MRT / CM の行列は手書きで埋められている**：可読性は犠牲だが、ヘッダ依存なし・コンパイラ最適化が効きやすい
-- **CM の `nc` 行列は速度依存**：各 $(i, j)$ で毎ステップ再計算が必要（[lbmcm.c:317](../../src/sec4/lbmcm.c#L317) 内側ループ）。計算コストは SRT の 10 倍超だが、$Re=5000$ で安定に解けるのは CM のみという代償でもある
+- **CM の `nc` 行列は速度依存**：各 $(i, j)$ で毎ステップ再計算が必要（[lbmcm.c:317](../../src/sec4/lbmcm.c#L317) 内側ループ）。計算コストは比較セクションの実測どおり SRT の約 3〜5 倍だが、$Re=5000$ で安定に解けるのは CM のみという代償でもある
 - **`DIM = 55` は `nx = 51` + 余白**：境界処理 `i-1`, `i+1` のオーバーフロー回避目的
 - **流線関数の Simpson 積分は偶数始点が必要**：[lbmcm.c:581](../../src/sec4/lbmcm.c#L581) の `j = 2` 始まりはこのため。$j=0, 1$ の値はゼロのまま残る
 
