@@ -10,6 +10,9 @@
 - `src/sec4`: multi-block と cavity flow の例
 - `src/sec5`: 二相流に関する Laplace 則と Zalesak disk の例
 - `src/sec6`: immersed boundary method を使った円筒 Couette flow などの例
+- `docs/sec1`, `docs/sec2`: 各サンプルコードの説明ドキュメント
+- `docs/assets`: 図生成スクリプトが出力する公開用画像
+- `docs/plot_generation.md`: 図生成スクリプト一覧と再生成方法
 
 ### ファイル一覧
 
@@ -18,11 +21,13 @@
 - `src/sec2/fdlbm.c`: 有限差分格子ボルツマン法による Poiseuille flow
 - `docs/sec2/fdlbm.md`: `fdlbm.c` の説明と数式
 - `src/sec2/fdmadv.c`: 1 次元移流方程式の有限差分法
+- `docs/sec2/fdmadv.md`: `fdmadv.c` の説明と数式
 - `src/sec2/lbmbound.c`: 境界条件スキームを比較する Poiseuille flow
 - `docs/sec2/lbmbound.md`: `lbmbound.c` の説明と数式
 - `src/sec2/lbmcavi.c`: compressibility error を含む cavity flow
 - `docs/sec2/lbmcavi.md`: `lbmcavi.c` の説明と数式
 - `src/sec2/lbmpoi.c`: 格子ボルツマン法による Poiseuille flow
+- `docs/sec2/lbmpoi.md`: `lbmpoi.c` の説明と数式
 - `src/sec3/lbmnc.c`: double-population thermal LBM による自然対流
 - `src/sec3/lbmtherm.c`: Thermal LBM の基本例
 - `src/sec4/lbmblock.c`: multi-block LBM による Couette flow
@@ -61,7 +66,6 @@ build\bin\fdmadv.exe
 scripts\run_one.cmd src\sec2\fdmadv.c
 ```
 
-この場合、実行ファイルは `build\bin` に、実行時に生成されるファイルは `outputs\fdmadv` に出力されます。
 この場合、実行ファイルは `build\bin` に、実行時に生成されるファイルは `outputs\sec2\fdmadv` のように sec ごとのフォルダに出力されます。
 
 すべての C ファイルをまとめてビルドする場合は次を実行します。
@@ -108,17 +112,27 @@ scripts\run_one.cmd src\sec1\lbmtv.c
 scripts\run_one.cmd src\sec2\fdlbm.c
 ```
 
-対話入力が必要な `fdmadv.c` は、たとえば Upwind scheme なら次のように実行できます。
+`fdmadv.c` は対話入力でもコマンドライン引数でも実行できます。たとえば Upwind scheme を既定の `dt = 0.5` で実行するなら次のどちらでも動きます。
 
 ```cmd
 echo 1 | build\bin\fdmadv.exe
 ```
+
+```cmd
+build\bin\fdmadv.exe 1 0.5
+```
+
+この実行では最終プロファイルを `fdmadv` に、各表示時刻の履歴を `fdmadv_history.dat` に出力します。
 
 Courant 数 `0.5` と `1.0` の比較図を再生成する場合は次を実行します。
 
 ```powershell
 d:/work/LBMcode/.venv/Scripts/python.exe scripts/plot_fdmadv_courant_compare.py
 ```
+
+生成される図は `outputs/sec2/fdmadv_courant_compare.png` に保存され、公開用コピーが `docs/assets/sec2/fdmadv_courant_compare.png` に作成されます。
+
+図生成スクリプト全体の一覧は `docs/plot_generation.md` にまとめています。
 
 ### sec3
 
