@@ -155,6 +155,7 @@ GitHub Actions では、`main` への push と pull request を契機に次を�
 
 `main` ブランチに取り込まれた主な変更（新しい順）：
 
+- **2026-05-20** [#21](https://github.com/tomollow/lbmcode/pull/21): sec4 の [`src/sec4/lbmcm.c`](src/sec4/lbmcm.c) 説明ドキュメント [`docs/sec4/lbmcm.md`](docs/sec4/lbmcm.md) を追加。SRT / MRT / 中心モーメント (CM) 衝突の数式（モーメント変換 $M$、シフト行列 $N(\mathbf{u})$、緩和行列 $S$）と Re=100/1000/5000 の比較結果を整理。6 ケースを一括実行するヘルパー [`scripts/run_lbmcm_compare.ps1`](scripts/run_lbmcm_compare.ps1) と分布・比較プロット [`scripts/plot_lbmcm_distribution.py`](scripts/plot_lbmcm_distribution.py) / [`scripts/plot_lbmcm_compare.py`](scripts/plot_lbmcm_compare.py) も同梱
 - **2026-05-19** [#19](https://github.com/tomollow/lbmcode/pull/19): sec4 に Spalart-Allmaras DES97 のハイブリッド RANS/LES 実装を追加（cavity / karman / backward_step）。共通定数とクロージャ関数を [`src/sec4/sa_closure.h`](src/sec4/sa_closure.h) に集約。高 Re サニティ版 `karman_des_hires.c` と RANS/LES 領域マップ [`scripts/plot_des_region_map.py`](scripts/plot_des_region_map.py) も同梱。クロスケース比較 doc: [`docs/sec4/les_summary.md`](docs/sec4/les_summary.md), [`docs/sec4/keps_summary.md`](docs/sec4/keps_summary.md)
 - **2026-05-12** [#18](https://github.com/tomollow/lbmcode/pull/18): sec4 の 6 ケース（kelbm / taylor_green / kelvin_helmholtz / cavity / backward_step / karman）に Smagorinsky LES 版を追加し、pure / k-ε / LES の 3 variant 比較に再編。[`docs/sec4/les_summary.md`](docs/sec4/les_summary.md) でクロスケース比較を新設
 - **2026-05-11** [#17](https://github.com/tomollow/lbmcode/pull/17): 同 6 ケースを横断する k-ε モデルの体系的比較 [`docs/sec4/keps_summary.md`](docs/sec4/keps_summary.md) を追加
