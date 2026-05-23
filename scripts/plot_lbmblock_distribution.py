@@ -84,7 +84,7 @@ def plot_distribution() -> None:
         vmax=vmax,
         rasterized=True,
     )
-    pcm_c = ax_2d.pcolormesh(
+    ax_2d.pcolormesh(
         xc,
         yc,
         uc / UT,
@@ -98,10 +98,11 @@ def plot_distribution() -> None:
     # mark interface (physical y = ny/2 = 16) and overlap band (15..16)
     ax_2d.axhline(NY / 2, color="white", linestyle="--", linewidth=0.9, alpha=0.85)
     ax_2d.axhline(NY / 2 - 1, color="white", linestyle=":", linewidth=0.7, alpha=0.7)
+    annot_bbox = dict(boxstyle="round,pad=0.25", fc="white", ec="#222", lw=0.6, alpha=0.92)
     ax_2d.text(0.5, NY / 2 + 0.4, "interface (粗 $y_c=1$ / 細 $y_f=n_{y,f}$)",
-               color="white", fontsize=8.5)
+               color="#111", fontsize=8.5, bbox=annot_bbox)
     ax_2d.text(0.5, NY / 2 - 0.9, "overlap 下端 (粗 $y_c=0$ / 細 $y_f=n_{y,f}-2$)",
-               color="white", fontsize=8.5)
+               color="#111", fontsize=8.5, bbox=annot_bbox)
 
     ax_2d.set_xlim(0, NX)
     ax_2d.set_ylim(0, NY)
@@ -114,12 +115,12 @@ def plot_distribution() -> None:
 
     # right: centerline profile
     ax_p = fig.add_subplot(gs[0, 2])
-    j_mid_f = NXF // 2
-    j_mid_c = NXC // 2
-    ax_p.plot(uf[:, j_mid_f] / UT, yf / NY, color="C0", linewidth=1.6,
+    i_mid_f = NXF // 2
+    i_mid_c = NXC // 2
+    ax_p.plot(uf[:, i_mid_f] / UT, yf / NY, color="C0", linewidth=1.6,
               marker="o", markersize=3.0, markerfacecolor="white",
               label="細格子 ($x=n_{x,f}/2$)")
-    ax_p.plot(uc[:, j_mid_c] / UT, yc / NY, color="C3", linewidth=1.6,
+    ax_p.plot(uc[:, i_mid_c] / UT, yc / NY, color="C3", linewidth=1.6,
               marker="s", markersize=3.0, markerfacecolor="white",
               label="粗格子 ($x=n_{x,c}/2$)")
     y_exact = np.linspace(0, NY, 401)
