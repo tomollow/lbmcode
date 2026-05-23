@@ -556,6 +556,31 @@ int main(void)
         fprintf(fp,"%10.8e\n", uf[nxf/2][j]);
       }
     fclose(fp);
+
+    fp = fopen("u3000_coarse","w");
+      for(j = 0; j <= nyc; j++){
+        for(i = 0; i <= nxc; i++){ fprintf(fp,"%10.8e ", uc[i][j]); }
+        fprintf(fp,"\n");
+      }
+    fclose(fp);
+    fp = fopen("v3000_coarse","w");
+      for(j = 0; j <= nyc; j++){
+        for(i = 0; i <= nxc; i++){ fprintf(fp,"%10.8e ", vc[i][j]); }
+        fprintf(fp,"\n");
+      }
+    fclose(fp);
+    fp = fopen("u3000_fine","w");
+      for(j = 0; j <= nyf; j++){
+        for(i = 0; i <= nxf; i++){ fprintf(fp,"%10.8e ", uf[i][j]); }
+        fprintf(fp,"\n");
+      }
+    fclose(fp);
+    fp = fopen("v3000_fine","w");
+      for(j = 0; j <= nyf; j++){
+        for(i = 0; i <= nxf; i++){ fprintf(fp,"%10.8e ", vf[i][j]); }
+        fprintf(fp,"\n");
+      }
+    fclose(fp);
   }
 
   printf("Time = %d, Norm = %15.8e\n", time, norm);
