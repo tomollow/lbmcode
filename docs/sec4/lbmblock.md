@@ -28,6 +28,8 @@ nxf = m*nx = 40;  nyf = ny = 32;       // fine grid
 nxc =   nx = 20;  nyc = ny/m + 1 = 17; // coarse grid
 ```
 
+![lbmblock.c メッシュ配置](../assets/sec4/lbmblock_mesh.png)
+
 物理座標 $y_{\rm phys} \in [0, n_y]$ における各格子のカバー範囲（refinement ratio $m = 2$）：
 
 | 領域 | 物理 $y$ 範囲 | 格子 | 格子幅 |
@@ -43,7 +45,7 @@ nxc =   nx = 20;  nyc = ny/m + 1 = 17; // coarse grid
 - **粗 $y_c = n_{y,c} = 17$**: 上端の動く壁 $u_t$
 - **細 $y_f = 0$**: 下端の固定壁 $u_b$
 
-x 方向は両格子ともに周期境界、ただし細格子は粗格子の 2 倍の解像度（$2i_c \leftrightarrow i_f$）。
+x 方向は両格子ともに周期境界、ただし細格子は粗格子の 2 倍の解像度（$2i_c \leftrightarrow i_f$）。図中の黄色帯がオーバーラップ層、上側の動壁（黒太線、矢印）から $u_t$ で駆動され、下側の固定壁（黒太線）で速度ゼロ。
 
 ## Couette 流れと解析解
 
@@ -60,6 +62,33 @@ u(y) = u_t\,\frac{y}{n_y}
 $$
 
 最終ステップで標準出力に格子中心断面 $u(n_x/2, j)$ と解析解の比較が表示されます。
+
+## 分布結果（$t = 3000$）
+
+![lbmblock.c 分布結果](../assets/sec4/lbmblock_distribution.png)
+
+左：$u/u_t$ の 2 次元分布。下半分（$y/H < 0.5$）は細格子（$\delta x = 0.5$）、上半分は粗格子（$\delta x = 1$）で塗られ、両者は物理座標で正しく重なる位置にプロットされています。色帯が連続して見えるのが多重格子接続が機能している証拠で、インターフェース（破線, $y = 16$）と overlap 下端（点線, $y = 15$）の間でも段差は視認できません。$x$ 方向はほぼ一様（Couette 流れの解析的性質）。
+
+右：中心鉛直線プロファイル。細格子（$x = n_{x,f}/2$, 青○）と粗格子（$x = n_{x,c}/2$, 赤■）の値が解析解（黒破線）と重なります。粗→細の遷移（$y/H \approx 0.47$）で折れ目はなく、Filippova-Hänel スケーリング則 + Lagrangian 時間補間 + 3 次スプライン空間補間の連携が正しく動作していることがわかります。
+
+## 過渡応答
+
+中心鉛直線 $x = n_x/2$ における $u(y)$ の時間発展（$t = 100, 200, 500, 1000, 3000$）と解析解 $u_t\,y/H$ の比較：
+
+![lbmblock.c 過渡プロファイル](../assets/sec4/lbmblock_couette.png)
+
+- 左：粗・細を結合した全領域プロファイル（$j = 0..n_y$, $\delta y = 1$）。境界 $y/H = 0.5$ で粗 → 細のスケーリングが正しく接続され、プロファイルが折れずに連続している
+- 右：細格子のみの下半分プロファイル（$j_f = 0..n_{y,f}$, $\delta y = 0.5$）。細格子の高解像度で同じ過渡応答を 2 倍の点数で解像
+
+時間とともに $t = 3000$ で線形 Couette 解（黒破線）に漸近します。粘性拡散の時間スケール $T_\nu = H^2/\nu \approx 32^2/0.233 \approx 4400$ に対して $t = 3000$ は約 $0.68\,T_\nu$ にあたり、漸近過程の途中段階。
+
+解析解からの絶対誤差：
+
+![lbmblock.c 絶対誤差](../assets/sec4/lbmblock_couette_error.png)
+
+- 誤差は時間とともに単調減少。$t = 3000$ で最大誤差 $\approx 7\times 10^{-3} u_t$、平均 $\approx 2\times 10^{-3} u_t$
+- インターフェース $y/H = 0.5$ 付近で誤差が一段下がるのは、細格子側の高解像度の効果と、Filippova-Hänel スケーリング則 + Lagrangian 時間補間 + スプライン空間補間が正しく機能し、**インターフェースが新たな誤差源にならない** ことを示します
+- 壁面近傍（$y/H = 0, 1$）で誤差がゼロになるのは、Zou-He 非平衡 bounce-back が壁面速度を正確に固定するため
 
 ## D2Q9 と BGK 衝突
 
@@ -315,7 +344,9 @@ U[0     ] : 下壁面（ub = 0）
 
 ```powershell
 scripts\build_one.cmd src/sec4/lbmblock.c
-build\bin\lbmblock.exe
+mkdir outputs\sec4\lbmblock
+cd outputs\sec4\lbmblock
+..\..\..\build\bin\lbmblock.exe
 ```
 
 出力ファイル（CWD）：
@@ -323,6 +354,23 @@ build\bin\lbmblock.exe
 - `data100`, `data200`, `data500`, `data1000`, `data3000` — 中心鉛直線 $u(n_x/2, j)$（全領域、$j = 0\ldots n_y$）
 - `data100f`, `data200f`, `data500f`, `data1000f`, `data3000f` — 細格子の中心鉛直線 $u_f(n_{x,f}/2, j_f)$（$j_f = 0\ldots n_{y,f}$）
 - `data`, `dataf` — 収束時の最終プロファイル
+
+追加で `t = 3000` の 2 次元場（粗・細それぞれ）：
+
+- `u3000_coarse`, `v3000_coarse` — 粗格子の $u_c(i, j)$, $v_c(i, j)$（$(n_{y,c}+1) \times (n_{x,c}+1)$）
+- `u3000_fine`, `v3000_fine` — 細格子の $u_f(i, j)$, $v_f(i, j)$（$(n_{y,f}+1) \times (n_{x,f}+1)$）
+
+結果図の再生成は 2 つのスクリプトに分かれます：
+
+```powershell
+.venv\Scripts\python.exe scripts\plot_lbmblock_couette.py
+.venv\Scripts\python.exe scripts\plot_lbmblock_distribution.py
+```
+
+`outputs/sec4/lbmblock/` と公開用 `docs/assets/sec4/` の両方に以下が書き出されます：
+
+- `lbmblock_couette.png`, `lbmblock_couette_error.png` — 過渡応答と絶対誤差（[plot_lbmblock_couette.py](../../scripts/plot_lbmblock_couette.py)）
+- `lbmblock_distribution.png`, `lbmblock_mesh.png` — 2D 分布結果とメッシュ配置図（[plot_lbmblock_distribution.py](../../scripts/plot_lbmblock_distribution.py)）
 
 ## 設計判断と注意
 
