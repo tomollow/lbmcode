@@ -32,6 +32,7 @@
 - `src/sec3/lbmtherm.c`: Thermal LBM の基本例
 - `src/sec4/lbmblock.c`: multi-block LBM による Couette flow
 - `src/sec4/lbmcm.c`: cavity flow の例
+- `src/sec4/lbmcm_karman.c`: 中心モーメント LBM による長方形障害物まわりの乱流（§4.6 図 4.5 定性再現）
 - `src/sec5/lbmlap.c`: Laplace's law の検証
 - `src/sec5/lbmzalesak.c`: Zalesak's disk の移流
 - `src/sec6/iblbm2cdfSRT.c`: direct forcing 法による円筒 Couette flow
