@@ -11,6 +11,13 @@
 // in the tau -> 0.5 regime where SRT/MRT would diverge, so the qualitative
 // picture (broadband wake + power-law spectrum) is reachable on a workstation.
 //
+// Caveat: the body force here is plain Guo forcing (half-force velocity
+// correction + post-collision F_i), which is the BGK-era recipe and is NOT
+// strictly consistent with central-moment relaxation. The combination is fine
+// for the qualitative demonstration in this file but should not be used for
+// benchmark-grade work; use a moment-space (or Strang-split) CM forcing
+// scheme there.
+//
 //   6  2  5
 //      |
 //   3--0--1
@@ -66,7 +73,7 @@
 
 static const int    cx[NDIR]   = { 0, 1, 0,-1, 0, 1,-1,-1, 1};
 static const int    cy[NDIR]   = { 0, 0, 1, 0,-1, 1, 1,-1,-1};
-static const double w_[NDIR]   = {4.0/9, 1.0/9, 1.0/9, 1.0/9, 1.0/9,
+static const double w[NDIR]   = {4.0/9, 1.0/9, 1.0/9, 1.0/9, 1.0/9,
                                   1.0/36, 1.0/36, 1.0/36, 1.0/36};
 static const int    opp[NDIR]  = { 0, 3, 4, 1, 2, 7, 8, 5, 6};
 
@@ -127,7 +134,7 @@ static void init_geometry(void) {
 static inline double feq_dir(int d, double rho_, double ux, double uy) {
     double eu = cx[d]*ux + cy[d]*uy;
     double u2 = ux*ux + uy*uy;
-    return w_[d] * rho_ * (1.0 + 3.0*eu + 4.5*eu*eu - 1.5*u2);
+    return w[d] * rho_ * (1.0 + 3.0*eu + 4.5*eu*eu - 1.5*u2);
 }
 
 static void initialize(void) {
@@ -298,7 +305,7 @@ static inline double guo_force_term(int d, double ux, double uy) {
     // here g = (FORCE_X, 0).
     double eu = cx[d]*ux + cy[d]*uy;
     double gx = (cx[d] - ux)*3.0 + 9.0*eu*cx[d];
-    return (1.0 - 0.5*OMEGA) * w_[d] * FORCE_X * gx;
+    return (1.0 - 0.5*OMEGA) * w[d] * FORCE_X * gx;
 }
 
 static void collide(void) {

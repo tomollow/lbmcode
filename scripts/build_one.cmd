@@ -46,4 +46,4 @@ if errorlevel 1 (
 )
 
 :compiler_ready
-cl /nologo /D_USE_MATH_DEFINES /Fo"%OBJECT%" /Fe"%OUTPUT%" "%SOURCE%" /link /STACK:8388608
+cl /nologo /O2 /D_USE_MATH_DEFINES /Fo"%OBJECT%" /Fe"%OUTPUT%" "%SOURCE%" /link /STACK:8388608

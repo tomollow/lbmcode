@@ -49,8 +49,11 @@ def load_wake_frame(path: Path):
     ys = sorted(df['y'].unique())
     nx = len(xs)
     ny = len(ys)
-    u = df.pivot(index='y', columns='x', values='u').values
-    v = df.pivot(index='y', columns='x', values='v').values
+    # reindex to make row/column order independent of CSV row order
+    u = df.pivot(index='y', columns='x', values='u').reindex(
+        index=ys, columns=xs).values
+    v = df.pivot(index='y', columns='x', values='v').reindex(
+        index=ys, columns=xs).values
     return u, v, nx, ny
 
 
@@ -72,7 +75,7 @@ if not wake_files:
     raise SystemExit(f'no wake frames in {SRC_DIR}')
 
 # Determine grid size from the first frame
-u0, v0, NX_W, NY_W = load_wake_frame(wake_files[0])
+_, _, NX_W, NY_W = load_wake_frame(wake_files[0])
 
 # Time-mean velocity for detrending (subtract mean flow so the spectrum reflects
 # the turbulent fluctuations, not the body-force-driven uniform component)

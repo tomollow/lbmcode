@@ -58,10 +58,18 @@ Mach 数 $u_\max / c_s \approx 0.12$ で圧縮性影響は無視できる範囲�
 ## 実行と再プロット
 
 ```powershell
-# 1. /O2 ビルド（CM 衝突は最適化なしだと数倍遅い）
+# ビルド + 実行 + プロットを一発で
+pwsh scripts\run_lbmcm_karman.ps1
+
+# 部分実行: -SkipBuild / -SkipRun / -SkipPlot を組み合わせる
+pwsh scripts\run_lbmcm_karman.ps1 -SkipRun        # プロットだけ更新
+```
+
+手動で各段階を回したい場合は以下：
+
+```powershell
+# 1. ビルド（scripts\build_one.cmd は /O2 がデフォルト）
 .\scripts\build_one.cmd src\sec4\lbmcm_karman.c
-# scripts\build_one.cmd は /Od デフォルトなので、より高速にしたい場合は
-# cl /O2 /D_USE_MATH_DEFINES src\sec4\lbmcm_karman.c /link /STACK:8388608 等で再ビルド
 
 # 2. 実行（CWD に CSV を吐くので outputs ディレクトリ内で動かす）
 New-Item -ItemType Directory -Force outputs\sec4\lbmcm_karman | Out-Null
@@ -77,7 +85,7 @@ python scripts\plot_lbmcm_karman_spectrum.py
 
 | ファイル | 内容 |
 |---|---|
-| `lbmcm_karman_snapshot_%05d.csv` | 全格子 $u, v, |\mathbf{U}|$, solid マスクのスナップショット（対数間隔・全 6 枚 + 最終） |
+| `lbmcm_karman_snapshot_%05d.csv` | 全格子 $u, v, |\mathbf{U}|$, solid マスクのスナップショット（対数間隔 5 枚 + 最終 1 枚、計 6 枚） |
 | `lbmcm_karman_wake_%05d.csv` | ウェイク窓のみの $u, v$（$t \ge 12000$、500 ステップ毎・26 フレーム） |
 | `lbmcm_karman_probe.csv` | 下流プローブ点 $(180, 48)$ の $u, v, u_\max$ 時系列（FFT 検証用） |
 
@@ -96,6 +104,7 @@ python scripts\plot_lbmcm_karman_spectrum.py
 - **スペクトル算出窓**: 障害物直後の強い shear layer を避けて $x \in [96, 248)$ から取っている。さらに前方を切るとフレーム数が減って統計収束が悪くなる
 - **データから $k=0$ を除外、$k=1$ は表示**: $k=1$ は窓全幅相当のスケールで、Karman 渦の主モードがここに乗る。これは inertial range の **下端ではない** ので参照線から外れて当然
 - **計算コストの内訳**: 中心モーメント衝突の per-cell コストは BGK の約 5 倍（4 回の 9×9 行列・ベクトル積 + $N(\mathbf{u})$ の毎ステップ再計算）。本コード全体は BGK 同サイズの karman.c より約 4 倍時間がかかる
+- **2D 乱流の $-5/3$ 解釈**: 厳密には 2D 乱流は逆エネルギーカスケード（$-5/3$）と enstrophy カスケード（$-3$）の二領域からなり、3D 様 Kolmogorov $-5/3$ がそのまま現れるわけではない。本計算で中央 1 decade に見える傾きは「弱乱流ウェイクでのおおむね $-5/3$ 様」と理解すべきで、原典 Geier 2006 の 2D 計算と同じ立場での **定性的** な比較対象。3D 強乱流の慣性領域と量的に同一視はできない
 
 ## 参考
 
