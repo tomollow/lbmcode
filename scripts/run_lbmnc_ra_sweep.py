@@ -69,8 +69,8 @@ plt.rcParams["mathtext.fontset"] = "dejavusans"
 def patch_source(src_text: str, ra_value: float, outer_loops: int) -> str:
     """Replace the Ra assignment and outer-loop count in the source text."""
     patched = re.sub(
-        r"ra\s*=\s*[^;]+;",
-        f"ra =   {ra_value:.6e};",
+        r"(?m)^\s*ra\s*=\s*[^;]+;",
+        f"  ra =   {ra_value:.6e};",
         src_text,
         count=1,
     )
@@ -110,11 +110,12 @@ def build_variant(ra_value: float, outer_loops: int) -> Path:
         variant_src.unlink(missing_ok=True)
 
 
-def run_variant(ra_value: float, exe: Path) -> Path:
+def run_variant(ra_value: float, exe: Path, timeout_s: float = 900.0) -> Path:
     exp = int(round(np.log10(ra_value)))
     run_dir = OUTPUT_BASE / f"lbmnc_ra{exp}"
     run_dir.mkdir(parents=True, exist_ok=True)
-    result = subprocess.run([str(exe)], cwd=run_dir, capture_output=True, text=True)
+    result = subprocess.run([str(exe)], cwd=run_dir, capture_output=True,
+                            text=True, timeout=timeout_s)
     log_path = run_dir / "run.log"
     log_path.write_text(result.stdout + "\n" + result.stderr, encoding="utf-8")
     if result.returncode != 0:
@@ -278,19 +279,21 @@ def main() -> None:
     for ra in RA_LIST:
         outer = OUTER_LOOP_OVERRIDE.get(ra, 50)
         print(f"\n=== Ra = {ra:.0e}, outer loops = {outer} ===")
-        exe = build_variant(ra, outer)
-        run_dir = run_variant(ra, exe)
-        m = analyse(run_dir)
-        if m.get("diverged", 0.0) == 1.0:
-            print(f"  diverged (NaN in output)")
-        else:
-            ref = DVD_BENCHMARK[ra]
-            print(f"  u_max  = {m['u_max']:8.3f}  (DVD {ref['u_max']:.3f})")
-            print(f"  v_max  = {m['v_max']:8.3f}  (DVD {ref['v_max']:.3f})")
-            print(f"  Nu_avg = {m['Nu_avg']:8.3f}  (DVD {ref['Nu_avg']:.3f})")
-            print(f"  |psi|  = {abs(m['psi_min']):8.3f}  (DVD {ref['psi_mid']:.3f})")
-        rows.append({"Ra": ra, "metrics": m})
-        cleanup_variant_exe(ra)
+        try:
+            exe = build_variant(ra, outer)
+            run_dir = run_variant(ra, exe)
+            m = analyse(run_dir)
+            if m.get("diverged", 0.0) == 1.0:
+                print(f"  diverged (NaN in output)")
+            else:
+                ref = DVD_BENCHMARK[ra]
+                print(f"  u_max  = {m['u_max']:8.3f}  (DVD {ref['u_max']:.3f})")
+                print(f"  v_max  = {m['v_max']:8.3f}  (DVD {ref['v_max']:.3f})")
+                print(f"  Nu_avg = {m['Nu_avg']:8.3f}  (DVD {ref['Nu_avg']:.3f})")
+                print(f"  |psi|  = {abs(m['psi_min']):8.3f}  (DVD {ref['psi_mid']:.3f})")
+            rows.append({"Ra": ra, "metrics": m})
+        finally:
+            cleanup_variant_exe(ra)
 
     csv_path = write_csv(rows)
     plot_path = make_sweep_plot(rows)

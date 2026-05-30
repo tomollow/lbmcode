@@ -66,7 +66,7 @@ def draw_schematic(axis: plt.Axes) -> None:
                                  cavity_r - cavity_l, cavity_t - cavity_b,
                                  facecolor="white", edgecolor="black", linewidth=1.2))
 
-    # Recirculation arrow (counter-clockwise: up on hot side, down on cold side).
+    # Recirculation arrow (clockwise: up on hot side, across top, down on cold side).
     cx, cy = 0.50, 0.50
     radius = 0.22
     theta = np.linspace(np.deg2rad(190.0), np.deg2rad(-100.0), 220)
