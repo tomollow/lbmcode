@@ -460,27 +460,27 @@ int main(void)
   } //loop1
 
   fp = fopen("datancu","w");
-    for(j = 1; j <= ny; j=j+2){ for(i = 1; i <= nx; i=i+2){
+    for(j = 1; j <= ny-1; j++){ for(i = 1; i <= nx-1; i++){
       fprintf(fp," %10.8e", u[i][j]/chi*h);
     }
   fprintf(fp,"\n");
-  } 
+  }
   fclose(fp);
 
   fp = fopen("datancv","w");
-    for(j = 1; j <= ny; j=j+2){ for(i = 1; i <= nx; i=i+2){
+    for(j = 1; j <= ny-1; j++){ for(i = 1; i <= nx-1; i++){
       fprintf(fp," %10.8e", v[i][j]/chi*h);
     }
   fprintf(fp,"\n");
-  } 
+  }
   fclose(fp);
 
   fp = fopen("datance","w");
-    for(j = 1; j <= ny; j=j+2){ for(i = 1; i <= nx; i=i+2){
+    for(j = 1; j <= ny-1; j++){ for(i = 1; i <= nx-1; i++){
       fprintf(fp," %10.8e", e[i][j]);
     }
   fprintf(fp,"\n");
-  } 
+  }
   fclose(fp);
 
   return 0;

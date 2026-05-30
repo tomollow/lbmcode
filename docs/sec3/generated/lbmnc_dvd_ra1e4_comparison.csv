@@ -1,0 +1,6 @@
+quantity,lbmnc,de_vahl_davis_1983,abs_error,rel_error_percent
+max |u|h/chi (vertical centerline),16.249327,16.1780,0.071327,0.44
+y/H at u_max,0.811111,0.8230,0.011889,1.44
+max |v|h/chi (horizontal centerline),19.644669,19.6170,0.027669,0.14
+x/H at v_max,0.122222,0.1190,0.003222,2.71
+average Nusselt at hot wall,2.239587,2.2430,0.003413,0.15
