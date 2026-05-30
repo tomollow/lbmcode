@@ -6,6 +6,8 @@ description: Document, run, analyse, and benchmark an LBM C sample in src/secN/ 
 
 このリポジトリ (lbmcode) の `src/secN/*.c` を、ドキュメント・図・ベンチマーク比較・PR まで一式作成する手順です。
 
+> **前提環境**: 本リポジトリはビルド/実行スクリプトが PowerShell / `cmd` ベース (Windows 専用)。Linux/macOS では `cmd /c scripts\run_one.cmd` 部分を MSVC 相当のローカル手順に置き換える必要があります。
+
 ## 入力の確認
 
 ユーザーから以下を確認 (不明なら聞く)：
@@ -13,6 +15,17 @@ description: Document, run, analyse, and benchmark an LBM C sample in src/secN/ 
 - **対象ファイル**: `src/sec{N}/{name}.c`
 - **比較するベンチマーク**: 文献名 (例: de Vahl Davis 1983, Ghia 1982) または「コード内の解析解」
 - **すでにある成果物**: `docs/sec{N}/{name}.md` や `scripts/plot_{name}*.py` が既にあれば、上書きでなく追補する
+
+## 起動例
+
+```
+/lbm-analyze
+対象: src/sec5/lbmlap.c
+ベンチマーク: Laplace の法則 Δp = σ/R
+特記事項: 界面厚さ W と σ/(σ_theory) の依存性も評価したい
+```
+
+ユーザの依頼に「解析して」「ベンチマーク比較して」等が含まれていれば description マッチで自動ロードされるので、上記の形で対象とベンチマークだけ渡せば残りは skill が誘導します。
 
 ## 成果物
 
@@ -103,7 +116,7 @@ PR の独立クリティカルレビュー。以下を疑え:
 - 物理直感 (回転方向, ピーク位置) と数値結果が整合するか
 - argmax / argmin の符号付き/絶対値の規約はベンチマーク文献と一致するか
   (DVD/Ghia 規約は signed argmax の正のピーク。np.abs で tie-break しない)
-- regex 置換が想定外マッチしないか (行頭アンカ ^\s* または \b で固定)
+- regex 置換が想定外マッチしないか (行頭アンカ `(?m)^[ \t]*` または `\b` で固定。`^\s*` は `\n` を含むため避ける)
 - 例外時に一時ファイル/exe が orphan しないか (try/finally で守る)
 - ドキュメント記述と現在のコードが食い違っていないか
   (特に修正前の古い文章が残っていないか)
@@ -125,7 +138,10 @@ PR の独立クリティカルレビュー。以下を疑え:
            docs/sec{N}/ docs/assets/sec{N}/ \
            scripts/plot_{name}_*.py scripts/run_{name}_*.py
    ```
-3. コミット (Co-Authored-By 必須、HEREDOC で改行を含む):
+3. コミット (Co-Authored-By 必須、HEREDOC で改行を含む)：
+
+   `<MODEL_NAME>` は **現在動いている Claude のモデル名と推奨される ID 表記** に置換すること（例: `Claude Opus 4.7 (1M context)`, `Claude Sonnet 4.6`, `Claude Haiku 4.5`）。直近の同等のコミットを `git log -3 --format="%(trailers:key=Co-Authored-By)"` で確認するのも有効。
+
    ```bash
    git commit -m "$(cat <<'EOF'
    Add sec{N} docs: {name}.c <one-line description>
@@ -133,7 +149,7 @@ PR の独立クリティカルレビュー。以下を疑え:
    <Multi-line body describing what changed, why, what numbers reproduce
    the benchmark, and any known limitations>
 
-   Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+   Co-Authored-By: <MODEL_NAME> <noreply@anthropic.com>
    EOF
    )"
    ```
@@ -160,17 +176,8 @@ PR の独立クリティカルレビュー。以下を疑え:
 | CSV 配置 | `docs/sec{N}/generated/` |
 | section README | sec3 の README.md を雛形に: ファイル一覧表 + ビルド/実行 + スクリプト一覧 + 「このディレクトリで扱う物理」 |
 | ベンチマーク規約 | $u_{\max}$ は鉛直中心線の **正のピーク** (`np.argmax(u_vert)`), $v_{\max}$ は水平中心線の **正のピーク**。`np.abs` で tie-break させない |
-| `subprocess.run` | 必ず `shell=False, timeout=<sec>`、`shell=True` 禁止 |
-| regex 置換 | `(?m)^\s*…` で行頭アンカ、`count=1` を併用 |
-
-## 起動例
-
-```
-/lbm-analyze
-対象: src/sec5/lbmlap.c
-ベンチマーク: Laplace の法則 Δp = σ/R
-特記事項: 界面厚さ W と σ/(σ_theory) の依存性も評価したい
-```
+| `subprocess.run` | 必ず `shell=False`。LBM ビルド/実行のような長時間プロセスには `timeout=<sec>` を付ける (`gh`/`git` 等のごく短い呼出は省略可)。`shell=True` 禁止 |
+| regex 置換 | 行頭アンカは `(?m)^[ \t]*…` を使う (`\s` は `\n` を含むため隣接行へ食い込む可能性あり)。`count=1` を併用 |
 
 ## チェックリスト (PR 提出前)
 
