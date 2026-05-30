@@ -8,3 +8,7 @@ u*_coarse
 v*_coarse
 u*_fine
 v*_fine
+
+# Claude Code: track shared skills/settings, ignore local session state
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
