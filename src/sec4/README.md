@@ -55,7 +55,7 @@ LES と RANS を領域で切替える Detached Eddy Simulation のハイブリ�
 | [cavity_des.c](cavity_des.c) | [cavity_des.md](../../docs/sec4/cavity_des.md) |
 | [backward_step_des.c](backward_step_des.c) | [backward_step_des.md](../../docs/sec4/backward_step_des.md) |
 | [karman_des.c](karman_des.c) | [karman_des.md](../../docs/sec4/karman_des.md) |
-| [karman_des_hires.c](karman_des_hires.c) | 高解像度版（同じ DES 実装で格子を密にしたもの） |
+| [karman_des_hires.c](karman_des_hires.c) | 高 Re 版（同じ格子 360×80 で $\tau$ を 0.55 → 0.51 に下げて $\nu$ を ~5 倍小さくし、$Re_D$ を ~450 に上げたもの。SA クロージャの活性化を確認する目的） |
 
 ヘッダ [sa_closure.h](sa_closure.h) は Spalart-Allmaras クロージャ係数を共有定義として提供しています。
 
