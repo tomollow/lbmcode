@@ -48,8 +48,6 @@ plt.rcParams["font.sans-serif"] = ["Yu Gothic", "Meiryo", "MS Gothic",
 plt.rcParams["axes.unicode_minus"] = False
 plt.rcParams["mathtext.fontset"] = "dejavusans"
 
-LAPLACE_RE = re.compile(r"laplace's law\s*:\s*([0-9.eE+-]+),\s*([0-9.eE+-]+)")
-
 
 def patch_radius(source_text: str, fraction: float) -> str:
     """Replace the radius factor 0.25 in the initial tanh profile only."""
@@ -61,34 +59,57 @@ def patch_radius(source_text: str, fraction: float) -> str:
 
 
 def run_case(fraction: float, src_text: str) -> dict:
-    """Build and run a temporary lbmlap copy with the given radius fraction."""
+    """Build and run a temporary lbmlap copy with the given radius fraction.
+
+    Each run executes in its own temporary working directory so the C data
+    files never pollute the repository root. The converged pressure jump is
+    read from the full-precision ``datalap`` file (``%10.8e``); lbmlap.c only
+    writes that file when it actually converges, so a missing ``datalap``
+    unambiguously marks a non-converged / diverged case.
+    """
     radius = NX * fraction
+    diverged = {"fraction": fraction, "radius": radius, "diverged": 1.0}
     tmp_c = SRC.with_name(f"lbmlap_r{int(round(radius*100)):04d}.c")
     exe = ROOT_DIR / "build" / "bin" / f"{tmp_c.stem}.exe"
     try:
         tmp_c.write_text(patch_radius(src_text, fraction), encoding="utf-8")
-        build = subprocess.run(
-            ["cmd", "/c", str(BUILD_SCRIPT), str(tmp_c)],
-            cwd=ROOT_DIR, capture_output=True, text=True,
-            timeout=BUILD_TIMEOUT, shell=False,
-        )
+        try:
+            build = subprocess.run(
+                ["cmd", "/c", str(BUILD_SCRIPT), str(tmp_c)],
+                cwd=ROOT_DIR, capture_output=True, text=True,
+                timeout=BUILD_TIMEOUT, shell=False,
+            )
+        except subprocess.TimeoutExpired:
+            print(f"  build timed out for frac={fraction}")
+            return diverged
         if build.returncode != 0 or not exe.exists():
             print(f"  build failed for frac={fraction}: {build.stderr[-300:]}")
-            return {"fraction": fraction, "radius": radius, "diverged": 1.0}
+            return diverged
 
-        run = subprocess.run(
-            [str(exe)], cwd=ROOT_DIR, capture_output=True, text=True,
-            timeout=RUN_TIMEOUT, shell=False,
-        )
-        matches = LAPLACE_RE.findall(run.stdout)
-        if not matches:
-            print(f"  no laplace output for frac={fraction}")
-            return {"fraction": fraction, "radius": radius, "diverged": 1.0}
+        with tempfile.TemporaryDirectory(prefix="lbmlap_sweep_") as run_cwd:
+            try:
+                subprocess.run(
+                    [str(exe)], cwd=run_cwd, capture_output=True, text=True,
+                    timeout=RUN_TIMEOUT, shell=False,
+                )
+            except subprocess.TimeoutExpired:
+                print(f"  run timed out for frac={fraction}")
+                return diverged
 
-        dp_measured = float(matches[-1][1])
+            datalap = Path(run_cwd) / "datalap"
+            if not datalap.exists():
+                # lbmlap.c writes datalap only on convergence -> not converged.
+                print(f"  did not converge for frac={fraction}")
+                return diverged
+            try:
+                dp_measured = float(datalap.read_text().split(",")[1])
+            except (IndexError, ValueError):
+                print(f"  unparseable datalap for frac={fraction}")
+                return diverged
+
         dp_theory = SIGMA / radius
         if not np.isfinite(dp_measured) or dp_measured <= 0:
-            return {"fraction": fraction, "radius": radius, "diverged": 1.0}
+            return diverged
         return {
             "fraction": fraction,
             "radius": radius,
