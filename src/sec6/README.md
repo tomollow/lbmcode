@@ -8,11 +8,13 @@
 
 内外 2 重円筒の Couette 流（外側静止、内側回転）を IB-LBM で解き、回転 Stokes 流の解析解と比較するベンチマークです。
 
-| ファイル | 体積力法 | 衝突演算子 |
-| --- | --- | --- |
-| [iblbm2cdfSRT.c](iblbm2cdfSRT.c) | Direct Forcing | SRT |
-| [iblbm2cicMRT.c](iblbm2cicMRT.c) | Implicit Correction | MRT |
-| [iblbm2cicTRT.c](iblbm2cicTRT.c) | Implicit Correction | TRT |
+| ファイル | 体積力法 | 衝突演算子 | 解説 |
+| --- | --- | --- | --- |
+| [iblbm2cdfSRT.c](iblbm2cdfSRT.c) | Direct Forcing | SRT | [docs/sec6/iblbm2cdfSRT.md](../../docs/sec6/iblbm2cdfSRT.md) |
+| [iblbm2cicMRT.c](iblbm2cicMRT.c) | Implicit Correction | MRT | — |
+| [iblbm2cicTRT.c](iblbm2cicTRT.c) | Implicit Correction | TRT | — |
+
+円筒 Couette 流ベンチマークの解析モデル・回転 Stokes 解との比較・誤差評価は [docs/sec6/iblbm2cdfSRT.md](../../docs/sec6/iblbm2cdfSRT.md) を参照してください。既定設定 ($R_o=17.5$, $R_i=11.25$, $u_0=0.01$, $\tau=0.6$) での接線速度の相対 L2 誤差は約 9.9% です。
 
 ### 粒子落下
 
@@ -21,7 +23,7 @@
 | [iblbmsingle.c](iblbmsingle.c) | 単一円板（円柱断面）の重力沈降。終端速度と Stokes 解との比較 |
 | [iblbmdkt.c](iblbmdkt.c) | 2 粒子の drafting–kissing–tumbling (DKT) ベンチマーク。後方粒子が前方粒子の wake に引き込まれて並走 → 接近 → 入れ替わる経典問題 |
 
-> 本セクションには `docs/sec6/` の解説ドキュメントおよび専用の可視化スクリプトはまだ整備されていません。各ソースの冒頭ヘッダコメントに変数定義と離散化が記載されています。
+> [iblbm2cdfSRT.c](iblbm2cdfSRT.c) には解説ドキュメントと可視化スクリプト ([scripts/plot_iblbm2cdfSRT_schematic.py](../../scripts/plot_iblbm2cdfSRT_schematic.py), [scripts/plot_iblbm2cdfSRT_results.py](../../scripts/plot_iblbm2cdfSRT_results.py)) を整備済みです。他のソースは冒頭ヘッダコメントに変数定義と離散化が記載されています。
 
 ## ビルドと実行
 
