@@ -38,7 +38,7 @@ PUBLISHED_ASSET_DIR = ROOT_DIR / "docs" / "assets" / "sec5"
 CSV_PATH = ROOT_DIR / "docs" / "sec5" / "generated" / "lbmzalesak_peclet.csv"
 
 NX = NY = 50
-SLOT_I = (23, 26)
+SLOT_I = (93 * NX // 200, 107 * NX // 200)   # = (23, 26) for nx=50 (integer div)
 SLOT_J = (2, NY // 2)
 PECLETS = [100.0, 200.0, 400.0, 800.0, 1600.0]
 

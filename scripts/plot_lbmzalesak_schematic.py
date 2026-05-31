@@ -31,7 +31,7 @@ plt.rcParams["mathtext.fontset"] = "dejavusans"
 # Source parameters (lbmzalesak.c).
 NX = NY = 50
 RADIUS = NX * 0.4            # 20.0
-SLOT_I = (23, 26)           # 93*nx/200 .. 107*nx/200 with integer division
+SLOT_I = (93 * NX // 200, 107 * NX // 200)   # = (23, 26) for nx=50 (integer div)
 SLOT_J = (2, NY // 2)       # 2 .. 25
 
 
