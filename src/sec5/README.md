@@ -6,10 +6,10 @@
 
 | ファイル | 物理問題 |
 | --- | --- |
-| [lbmlap.c](lbmlap.c) | Laplace の法則の検証：静止液滴内外の圧力差 $\Delta p = \sigma/R$ を界面厚さと格子解像度をふってベンチマーク |
+| [lbmlap.c](lbmlap.c) | Laplace の法則の検証：静止液滴内外の圧力差 $\Delta p = \sigma/R$ を半径をふってベンチマーク（解説: [docs/sec5/lbmlap.md](../../docs/sec5/lbmlap.md)） |
 | [lbmzalesak.c](lbmzalesak.c) | Zalesak の円盤（切欠き付き円板の回転）：相場移流の形状保持と数値拡散の評価 |
 
-> 本セクションには `docs/sec5/` の解説ドキュメントおよび専用の可視化スクリプトはまだ整備されていません。各ソースの冒頭ヘッダコメントに変数の意味と離散化が記載されているので、まずはそちらを参照してください。
+> [lbmlap.c](lbmlap.c) の解説・図・ベンチマークは [docs/sec5/lbmlap.md](../../docs/sec5/lbmlap.md) に整備済みです。[lbmzalesak.c](lbmzalesak.c) は未整備で、ソース冒頭のヘッダコメントを参照してください。
 
 ## ビルドと実行
 
@@ -21,6 +21,16 @@ cmd /c scripts\run_one.cmd src\sec5\lbmzalesak.c
 ```
 
 ビルドだけ行いたいときは [scripts/build_one.cmd](../../scripts/build_one.cmd) を使います。
+
+## 可視化・ベンチマークスクリプト
+
+[lbmlap.c](lbmlap.c) 用に次のスクリプトを用意しています（出力は `outputs/sec5/lbmlap/` と `docs/assets/sec5/` の両方）。
+
+```powershell
+d:/work/LBMcode/.venv/Scripts/python.exe scripts/plot_lbmlap_schematic.py     # 図 5.0 模式図
+d:/work/LBMcode/.venv/Scripts/python.exe scripts/plot_lbmlap_results.py       # 図 5.1 結果 4 パネル
+d:/work/LBMcode/.venv/Scripts/python.exe scripts/run_lbmlap_radius_sweep.py   # 図 5.2 半径スイープ
+```
 
 ## このディレクトリで扱う物理と数値
 
