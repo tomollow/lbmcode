@@ -12,9 +12,9 @@
 | --- | --- | --- | --- |
 | [iblbm2cdfSRT.c](iblbm2cdfSRT.c) | Direct Forcing | SRT | [docs/sec6/iblbm2cdfSRT.md](../../docs/sec6/iblbm2cdfSRT.md) |
 | [iblbm2cicMRT.c](iblbm2cicMRT.c) | Implicit Correction | MRT | [docs/sec6/iblbm2cicMRT.md](../../docs/sec6/iblbm2cicMRT.md) |
-| [iblbm2cicTRT.c](iblbm2cicTRT.c) | Implicit Correction | TRT | — |
+| [iblbm2cicTRT.c](iblbm2cicTRT.c) | Implicit Correction | TRT | [docs/sec6/iblbm2cicTRT.md](../../docs/sec6/iblbm2cicTRT.md) |
 
-円筒 Couette 流ベンチマークの解析モデル・回転 Stokes 解との比較・誤差評価は [docs/sec6/iblbm2cdfSRT.md](../../docs/sec6/iblbm2cdfSRT.md)（Direct Forcing + SRT）と [docs/sec6/iblbm2cicMRT.md](../../docs/sec6/iblbm2cicMRT.md)（Implicit Correction + MRT）を参照してください。既定設定 ($R_o=17.5$, $R_i=11.25$, $u_0=0.01$, $\tau=0.6$) での接線速度の相対 L2 誤差は、DF-SRT 版が約 9.9%、IC-MRT 版が約 7.7% です。後者は半力補正を含む Guo (2002) 力項と MRT により、Lagrangian 点が粗い（外 21／内 14 点）にもかかわらず誤差が小さくなります。
+円筒 Couette 流ベンチマークの解析モデル・回転 Stokes 解との比較・誤差評価は [docs/sec6/iblbm2cdfSRT.md](../../docs/sec6/iblbm2cdfSRT.md)（Direct Forcing + SRT）、[docs/sec6/iblbm2cicMRT.md](../../docs/sec6/iblbm2cicMRT.md)（Implicit Correction + MRT）、[docs/sec6/iblbm2cicTRT.md](../../docs/sec6/iblbm2cicTRT.md)（Implicit Correction + TRT）を参照してください。接線速度の相対 L2 誤差は、DF-SRT 版が約 9.9%（$\tau=0.6$）、IC-MRT 版が約 7.7%（$\tau=0.6$）、IC-TRT 版が約 8.3%（$\tau_+=10$, $\Lambda=9/8$）です。陰的補正の 2 版は半力補正を含む Guo (2002) 力項により、Lagrangian 点が粗い（外 21／内 14 点）にもかかわらず DF-SRT より誤差が小さくなります。TRT 版は collision を偶奇 2 緩和に替え、磁数 $\Lambda$ で境界 slip を制御する点が特徴です。
 
 ### 粒子落下
 
@@ -23,7 +23,7 @@
 | [iblbmsingle.c](iblbmsingle.c) | 単一円板（円柱断面）の重力沈降。終端速度と Stokes 解との比較 |
 | [iblbmdkt.c](iblbmdkt.c) | 2 粒子の drafting–kissing–tumbling (DKT) ベンチマーク。後方粒子が前方粒子の wake に引き込まれて並走 → 接近 → 入れ替わる経典問題 |
 
-> [iblbm2cdfSRT.c](iblbm2cdfSRT.c) と [iblbm2cicMRT.c](iblbm2cicMRT.c) には解説ドキュメントと可視化スクリプト ([scripts/plot_iblbm2cdfSRT_schematic.py](../../scripts/plot_iblbm2cdfSRT_schematic.py), [scripts/plot_iblbm2cdfSRT_results.py](../../scripts/plot_iblbm2cdfSRT_results.py), [scripts/plot_iblbm2cicMRT_schematic.py](../../scripts/plot_iblbm2cicMRT_schematic.py), [scripts/plot_iblbm2cicMRT_results.py](../../scripts/plot_iblbm2cicMRT_results.py)) を整備済みです。他のソースは冒頭ヘッダコメントに変数定義と離散化が記載されています。
+> [iblbm2cdfSRT.c](iblbm2cdfSRT.c)、[iblbm2cicMRT.c](iblbm2cicMRT.c)、[iblbm2cicTRT.c](iblbm2cicTRT.c) には解説ドキュメントと可視化スクリプト ([scripts/plot_iblbm2cdfSRT_schematic.py](../../scripts/plot_iblbm2cdfSRT_schematic.py), [scripts/plot_iblbm2cdfSRT_results.py](../../scripts/plot_iblbm2cdfSRT_results.py), [scripts/plot_iblbm2cicMRT_schematic.py](../../scripts/plot_iblbm2cicMRT_schematic.py), [scripts/plot_iblbm2cicMRT_results.py](../../scripts/plot_iblbm2cicMRT_results.py), [scripts/plot_iblbm2cicTRT_schematic.py](../../scripts/plot_iblbm2cicTRT_schematic.py), [scripts/plot_iblbm2cicTRT_results.py](../../scripts/plot_iblbm2cicTRT_results.py)) を整備済みです。他のソースは冒頭ヘッダコメントに変数定義と離散化が記載されています。
 
 ## ビルドと実行
 
