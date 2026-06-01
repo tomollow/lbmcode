@@ -510,3 +510,7 @@ Ra スイープから読み取れる傾向は次のとおりです。
 - D2Q9 の MRT（Lallemand–Luo）と D2Q5 の MRT が、同じ実装パターン（モーメント変換 → 緩和 → 逆変換）で並べて書かれている
 - 温度境界条件のうち、Dirichlet（左右）は `-g + 2 w_k^T T_w` 形、Neumann（上下）は符号なし bounce-back と、用途で型を使い分けている
 - `outputs` ディレクトリへ書く前の段階のサンプルで、ASCII 温度マップを使ってその場で結果を確認できる
+
+## 関連：walberla / lbmpy での再現
+
+同じ側面加熱キャビティ自然対流を、walberla と同じコード生成エコシステム（lbmpy / pystencils）で再現し、de Vahl Davis (1983) ベンチマークおよび Ra スイープで検証した結果を [lbmnc_lbmpy.md](lbmnc_lbmpy.md) にまとめています。
